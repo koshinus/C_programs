@@ -1,0 +1,10 @@
+<arith project>
+<project option -work_directory .\Obj -output_path .\Java>
+<Source Files>
+<option c, C>
+.\arith.c
+</Source Files>
+<Header Files>
+<option h, H>
+</Header Files>
+</arith project>
