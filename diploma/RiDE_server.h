@@ -1,6 +1,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
 #include <uv.h>
 
 /*
@@ -10,20 +13,39 @@
     free(serv->info);
 */
 
+#define PLACE_FLAG      0
+#define TRANSFER_FLAG   1
+
 typedef struct datapack_
 {
     uint64_t id;
     //uint64_t data_len;
-    const uint8_t * data;
+    const int8_t data[];
 } datapack;
 
 typedef struct datablock_
 {
     uint64_t id;
-    uint8_t * start;
-    uint8_t * end;
+    uint64_t len;
+    uint64_t busy_len;
+    char data[];
 } datablock;
 
+datablock * datablock_alloc(const char *buf, uint64_t id, uint64_t len, uint64_t busy)
+{
+    datablock *block;
+    size_t size = offsetof(datablock, data) * sizeof(datablock) * len;
+    block = malloc(size);
+    if (!block)
+        return NULL;
+    strncpy(block->data, buf, busy);
+    block->id = id;
+    block->len = len;
+    block->busy_len = busy;
+    return block;
+}
+
+/*
 typedef struct RiDE_server_
 {
     //uv_loop_t *loop;
@@ -50,3 +72,4 @@ void on_read(RiDE_server *serv)
 void stop(RiDE_server *serv)
 {
 }
+*/

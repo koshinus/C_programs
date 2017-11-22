@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <uv.h>
+//#include <pthread.h>
 #include "RiDE_server.h"
 
 /*
@@ -54,14 +54,31 @@ int main()
 */
 
 #define CHECK(r, msg)                                       \
-    if ((r) < 0) {                                          \
+    if ((r) < 0)                                            \
+    {                                                       \
         fprintf(stderr, "%s: %s\n", (msg), uv_strerror(r)); \
         exit(1);                                            \
     }
-  
-static uv_loop_t *uv_loop;
+
+static uv_loop_t *  uv_loop;
 static uv_udp_t   recv_sock;
 static uv_udp_t   send_sock;
+datablock *      *    datas;
+
+static void place(uv_udp_t * handle, const uv_buf_t * rcvbuf, const struct sockaddr * addr)
+{
+    
+}
+
+static void transmit(uv_udp_t * handle, const uv_buf_t * rcvbuf, const struct sockaddr * addr)
+{
+    
+}
+
+static void recv_acception()
+{
+    
+}
  
 static void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const struct sockaddr* addr, unsigned flags) 
 {
@@ -79,34 +96,16 @@ static void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, con
         printf("Message from client %s is empty.", addr->sa_data);
         return;
     }
-    const char *buf = rcvbuf->base;
-    // buf[0] == 'p' && buf[1] == 'l' && buf[2] == 'a' && buf[3] == 'c' && buf[4] == 'e'
-    // buf[0] == 't' && buf[1] == 'r' && buf[2] == 'a' && buf[3] == 'n' && buf[4] == 's'
-    if (*buf == 0) // place flag
+    if (*rcvbuf->base == 'p') // place flag
     {
         place(handle, rcvbuf, addr);
     }
-    else if (*buf == 1) // transfer-to flag
+    else if (*rcvbuf->base == 't') // transfer-to flag
     {
-        transfer_to(handle, rcvbuf, addr);
+        transmit(handle, rcvbuf, addr);
     }
     else
         printf("Incorrect request in message from client %s.", addr->sa_data);
-}
-
-static void place(uv_udp_t *handle, const uv_buf_t* rcvbuf, const struct sockaddr* addr)
-{
-    
-}
-
-static void transfer_to(uv_udp_t *handle, const uv_buf_t* rcvbuf, const struct sockaddr* addr)
-{
-    
-}
-
-static void recv_acception()
-{
-    
 }
 
 static void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf) 
@@ -116,8 +115,44 @@ static void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf)
     printf("malloc:%lu %p\n",buf->len,buf->base);
 }
 
+static void read_info(const char * buf, uint64_t * id, uint64_t * len, uint64_t * busy, char **addr, char ** data_ptr)
+{
+    // Check the first byte in received buffer
+    switch(*buf)
+    {
+        case 'p':
+        {
+            printf("Place.\n");
+            buf++;
+            goto Place;
+        }
+        case 't':
+        {
+            printf("Transmit.\n");
+            buf++;
+            goto Transmit;
+        }
+        default :
+        {
+            printf("Error.\n");
+            return;
+        }
+    }
+Transmit:
+    // Copy address of host where need to transmit data
+    strncpy(*addr, buf, 14);
+    buf += 14;
+Place:
+    // Interpret next 24 bytes as 3 unsigned 64-bit numbers
+    *id   = ((uint64_t *)buf)[0];
+    *len  = ((uint64_t *)buf)[1];
+    *busy = ((uint64_t *)buf)[2];
+    *data_ptr = (char  *)(buf + 24);
+}
+
 int main(int argc,char *argv[]) 
 {
+    /*
     int status;
     struct sockaddr_in addr;
     uv_loop = uv_default_loop();
@@ -134,6 +169,59 @@ int main(int argc,char *argv[])
     CHECK(status,"recv");
     
     uv_run(uv_loop, UV_RUN_DEFAULT);
-    
+    */
+    int datas_len = 2;
+    datas = malloc(sizeof(datablock *) * datas_len);
+    int len = 100, j = 0;
+    char str[len];
+    while(1)
+    {
+        printf("Enter your data:\n");
+        int c = 1, i = 0;
+        // Read string from stdin
+        while((c = getc(stdin)) != '\n' && i < len)
+        {            
+            str[i] = (char)c;
+            i++;
+        }
+        // Structures for datablock
+        uint64_t id;
+        uint64_t len;
+        uint64_t busy_len;
+        char addr[14];
+        char *data_ptr = NULL;
+        // Initialization of datablock
+        read_info(str, &id, &len, &busy_len, &addr, &data_ptr);
+        datablock * new_data = datablock_alloc(data_ptr, id, len, busy_len);
+        // Checking correctness of initialization
+        if(!new_data)
+        {
+            printf("Not enough memory!");
+            for(int k = 0; k < j; k++)
+                free(datas[i]->data);
+            free(datas);
+        }
+        // In case if array of datablocks is full
+        if(j == datas_len)
+        {
+            datas_len *= 2;
+            datas = realloc(datas, datas_len*sizeof(datablock *));
+            if(!datas)
+            {
+                printf("Not enough memory!");
+                for(int k = 0; k < j; k++)
+                    free(datas[i]->data);
+                free(datas);
+            }
+        }
+        datas[j] = new_data;
+        j++;
+        for(int k = 0; k < j; k++)
+            for(int l = 0; l < datas[k]->busy_len; l++)
+                printf("%c", datas[k]->data[l]);
+    }
+    for(int k = 0; k < j; k++)
+        free(datas[k]->data);
+    free(datas); 
     return 0;
 }
