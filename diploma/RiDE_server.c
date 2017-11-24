@@ -1,57 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <uv.h>
-//#include <pthread.h>
+#include <ctype.h>
 #include "RiDE_server.h"
-
-/*
-uv_loop_t *loop;
-uv_udp_t send_socket;
-uv_udp_t recv_socket;
-
-int main() 
-{
-    loop = uv_default_loop();
-
-    uv_udp_init(loop, &recv_socket);
-    struct sockaddr_in recv_addr;
-    uv_ip4_addr("0.0.0.0", 68, &recv_addr);
-    uv_udp_bind(&recv_socket, (const struct sockaddr *)&recv_addr, UV_UDP_REUSEADDR);
-    uv_udp_recv_start(&recv_socket, alloc_buffer, on_read);
-
-    uv_udp_init(loop, &send_socket);
-    struct sockaddr_in broadcast_addr;
-    uv_ip4_addr("0.0.0.0", 0, &broadcast_addr);
-    uv_udp_bind(&send_socket, (const struct sockaddr *)&broadcast_addr, 0);
-    uv_udp_set_broadcast(&send_socket, 1);
-
-    uv_udp_send_t send_req;
-    uv_buf_t discover_msg = make_discover_msg();
-
-    struct sockaddr_in send_addr;
-    uv_ip4_addr("255.255.255.255", 67, &send_addr);
-    uv_udp_send(&send_req, &send_socket, &discover_msg, 1, (const struct sockaddr *)&send_addr, on_send);
-
-    return uv_run(loop, UV_RUN_DEFAULT);
-}
-
-int main()
-{
-    int *ptr = malloc(4*sizeof(int));
-    for (int i = 0; i < 4; i++)
-        ptr[i] = i;
-    for (int i = 0; i < 4; i++)
-        printf("%d ", ptr[i]);
-    
-    printf("\n");
-    ptr = realloc(ptr, 10);
-    for (int i = 0; i < 10; i++)
-        printf("%d ", ptr[i]);
-    
-    printf("\n");
-    return 0;
-}
-*/
 
 #define CHECK(r, msg)                                       \
     if ((r) < 0)                                            \
@@ -60,168 +11,210 @@ int main()
         exit(1);                                            \
     }
 
-static uv_loop_t *  uv_loop;
-static uv_udp_t   recv_sock;
-static uv_udp_t   send_sock;
-datablock *      *    datas;
+datablock *        * datas;
+uint64_t    datas_capacity;
+uint64_t      datas_length;
 
-static void place(uv_udp_t * handle, const uv_buf_t * rcvbuf, const struct sockaddr * addr)
+static void datas_dealloc()
 {
-    
+    for(int i = 0; i < datas_length; i++)
+        free(datas[i]->data);
+    free(datas);
 }
 
-static void transmit(uv_udp_t * handle, const uv_buf_t * rcvbuf, const struct sockaddr * addr)
+static void datas_configuration()
 {
-    
+    datas_capacity = 2;
+    datas_length = 0;
+    datas = malloc(sizeof(datablock *) * datas_length);
 }
 
-static void recv_acception()
+uint64_t atou64(const char * str)
 {
-    
-}
- 
-static void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const struct sockaddr* addr, unsigned flags) 
-{
-    /*
-    if (nread > 0) 
+    uint64_t res = 0;
+    while(*str)
     {
-        printf("%lu\n",nread);
-        printf("%s",rcvbuf->base);
+        res *= 10;
+        res += *str - 48;
+        str++;
     }
-    printf("free  :%lu %p\n",rcvbuf->len,rcvbuf->base);
-    free(rcvbuf->base);
-    */
-    if (nread <= 0)
-    {
-        printf("Message from client %s is empty.", addr->sa_data);
-        return;
-    }
-    if (*rcvbuf->base == 'p') // place flag
-    {
-        place(handle, rcvbuf, addr);
-    }
-    else if (*rcvbuf->base == 't') // transfer-to flag
-    {
-        transmit(handle, rcvbuf, addr);
-    }
-    else
-        printf("Incorrect request in message from client %s.", addr->sa_data);
+    return res;
 }
 
-static void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf) 
+static int extract_uint64_from_buf(const char ** buf, uint64_t * num)
 {
-    buf->base = malloc(suggested_size);
-    buf->len = suggested_size;
-    printf("malloc:%lu %p\n",buf->len,buf->base);
+    char * num_start = (char *)*buf;
+    char for_copying[100];
+    // Extracting num
+    while(**buf != ':')
+    {
+        if (!isdigit(**buf))
+            return 1;
+        (*buf)++;
+    }
+    strncpy(for_copying, num_start, (int)(*buf - num_start));
+    *num = atou64(for_copying);
+    (*buf)++;// Skip ':' at end
+    return 0;
 }
 
-static void read_info(const char * buf, uint64_t * id, uint64_t * len, uint64_t * busy, char **addr, char ** data_ptr)
+static int read_info(const char * buf, uint64_t * id, uint64_t * len, uint64_t * busy, char **addr, char ** data_ptr)
 {
+    int semicolons = 0;
+    char * addr_start = (char *)(buf + 1);
+    int error;
     // Check the first byte in received buffer
     switch(*buf)
     {
         case 'p':
         {
             printf("Place.\n");
-            buf++;
+            buf++; // Skip 'p'
             goto Place;
         }
         case 't':
         {
             printf("Transmit.\n");
-            buf++;
+            buf++; // Skip 't'
             goto Transmit;
         }
         default :
         {
             printf("Error.\n");
-            return;
+            return UNKNOWN_COMMAND;
         }
     }
 Transmit:
-    // Copy address of host where need to transmit data
-    strncpy(*addr, buf, 14);
-    buf += 14;
+    while(semicolons != 2)
+    {
+        buf++; // Skip ':' symbol at first iteration
+        if (*buf == ':')
+        {
+            semicolons++;
+            continue;
+        }
+        if (!isdigit(*buf) && *buf != '.')
+        {
+            printf("Parsing error: unacceptable symbol in host address.");
+            return INCORRECT_ADDR;
+        }
+    }
+    strncpy(*addr, addr_start, (int)(buf - addr_start));
+    buf++; // Skip ':' symbol at end of address
 Place:
-    // Interpret next 24 bytes as 3 unsigned 64-bit numbers
-    *id   = ((uint64_t *)buf)[0];
-    *len  = ((uint64_t *)buf)[1];
-    *busy = ((uint64_t *)buf)[2];
-    *data_ptr = (char  *)(buf + 24);
+    error = extract_uint64_from_buf(&buf, id);
+    if (error)
+        return INCORRECT_ID;
+    error = extract_uint64_from_buf(&buf, len);
+    if (error)
+        return INCORRECT_SIZE;
+    error = extract_uint64_from_buf(&buf, busy);
+    if (error)
+        return INCORRECT_BUSY_SIZE;
+    //printf("Parsing error: unacceptable symbol in block's id.");
+    //printf("Parsing error: unacceptable symbol in block's summary size.");
+    //printf("Parsing error: unacceptable symbol in block's busy size.");
+    *data_ptr = (char *)buf;
+    return PARSING_CORRECT;
+    /*
+    char * id_start = buf, * len_start, * busy_start;
+    char for_copying[100];
+    // Extracting id
+    while(*buf != ':')
+    {
+        if (!isdigit(*buf))
+        {
+            printf("Parsing error: unacceptable symbol in block's id.");
+            return INCORRECT_ID;
+        }
+        buf++;
+    }
+    strncpy(for_copying, id_start, (int)(buf - id_start));
+    *id = atollu(for_copying);
+    // Extracting summary block size
+    while(*buf != ':')
+    {
+        if (!isdigit(*buf))
+        {
+            printf("Parsing error: unacceptable symbol in block's id.");
+            return INCORRECT_SIZE;
+        }
+        buf++;
+    }
+    strncpy(for_copying, id_start, (int)(buf - id_start));
+    *id = atollu(for_copying);
+    // Extracting data size
+    while(*buf != ':')
+    {
+        if (!isdigit(*buf))
+        {
+            printf("Parsing error: unacceptable symbol in block's id.");
+            return INCORRECT_BUSY_SIZE;
+        }
+        buf++;
+    }
+    strncpy(for_copying, id_start, (int)(buf - id_start));
+    *id = atollu(for_copying);
+    */
+}
+
+void process(const char * str)
+{
+    // Structures for datablock
+    uint64_t id;
+    uint64_t len;
+    uint64_t busy_len;
+    char addr[22];
+    char *data_ptr;
+    // Initialization of datablock
+    read_info(str, &id, &len, &busy_len, &addr, &data_ptr);
+    for (uint64_t i = 0; i < datas_length; i++)
+    {
+        if (datas[i]->id == id)
+        {
+            strncpy(datas[i]->data + datas[i]->busy_len, data_ptr, busy_len);
+            datas[i]->busy_len += busy_len;
+            return;
+        }
+    }
+    datablock * new_data = datablock_alloc(data_ptr, id, len, busy_len);
+    // Checking correctness of initialization
+    if(!new_data)
+    {
+        printf("Not enough memory!");
+        datas_dealloc();
+        return;
+    }
+    // In case if array of datablocks is full
+    if(datas_length == datas_capacity)
+    {
+        datas_capacity *= 2;
+        datas = realloc(datas, datas_capacity*sizeof(datablock *));
+        if(!datas)
+        {
+            printf("Not enough memory!");
+            datas_dealloc();
+            return;
+        }
+    }
+    datas[datas_length] = new_data;
+    datas_length++;
+    /*
+    for(int i = 0; i < datas_length; i++)
+        for(int j = 0; j < datas[i]->busy_len; j++)
+            printf("%c", datas[i]->data[j]);
+    datas_dealloc();
+    */
 }
 
 int main(int argc,char *argv[]) 
 {
-    /*
-    int status;
-    struct sockaddr_in addr;
-    uv_loop = uv_default_loop();
-    
-    status = uv_udp_init(uv_loop,&recv_sock);
-    CHECK(status,"init");
-    
-    uv_ip4_addr("0.0.0.0", 11000, &addr);
-
-    status = uv_udp_bind(&recv_sock, (const struct sockaddr*)&addr, UV_UDP_REUSEADDR);
-    CHECK(status,"bind");
-    
-    status = uv_udp_recv_start(&recv_sock, on_alloc, on_recv);
-    CHECK(status,"recv");
-    
-    uv_run(uv_loop, UV_RUN_DEFAULT);
-    */
-    int datas_len = 2;
-    datas = malloc(sizeof(datablock *) * datas_len);
-    int len = 100, j = 0;
-    char str[len];
-    while(1)
-    {
-        printf("Enter your data:\n");
-        int c = 1, i = 0;
-        // Read string from stdin
-        while((c = getc(stdin)) != '\n' && i < len)
-        {            
-            str[i] = (char)c;
-            i++;
-        }
-        // Structures for datablock
-        uint64_t id;
-        uint64_t len;
-        uint64_t busy_len;
-        char addr[14];
-        char *data_ptr = NULL;
-        // Initialization of datablock
-        read_info(str, &id, &len, &busy_len, &addr, &data_ptr);
-        datablock * new_data = datablock_alloc(data_ptr, id, len, busy_len);
-        // Checking correctness of initialization
-        if(!new_data)
-        {
-            printf("Not enough memory!");
-            for(int k = 0; k < j; k++)
-                free(datas[i]->data);
-            free(datas);
-        }
-        // In case if array of datablocks is full
-        if(j == datas_len)
-        {
-            datas_len *= 2;
-            datas = realloc(datas, datas_len*sizeof(datablock *));
-            if(!datas)
-            {
-                printf("Not enough memory!");
-                for(int k = 0; k < j; k++)
-                    free(datas[i]->data);
-                free(datas);
-            }
-        }
-        datas[j] = new_data;
-        j++;
-        for(int k = 0; k < j; k++)
-            for(int l = 0; l < datas[k]->busy_len; l++)
-                printf("%c", datas[k]->data[l]);
-    }
-    for(int k = 0; k < j; k++)
-        free(datas[k]->data);
-    free(datas); 
+    datas_configuration();
+    const char * str1 = "p:1:100:7:Hello, ";
+    const char * str2 = "t:192.68.78.9:11000:2:100:6:World!";
+    const char * str3 = "p:1:100:6:World!";
+    process(str1);
+    process(str2);
+    process(str3);
     return 0;
 }

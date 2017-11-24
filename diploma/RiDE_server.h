@@ -13,8 +13,14 @@
     free(serv->info);
 */
 
-#define PLACE_FLAG      0
-#define TRANSFER_FLAG   1
+//#define PLACE_FLAG           0
+//#define TRANSFER_FLAG        1
+#define PARSING_CORRECT     0
+#define UNKNOWN_COMMAND     1
+#define INCORRECT_ADDR      2
+#define INCORRECT_ID        3
+#define INCORRECT_SIZE      4
+#define INCORRECT_BUSY_SIZE 5
 
 typedef struct datapack_
 {
