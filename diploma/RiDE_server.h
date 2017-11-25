@@ -39,12 +39,14 @@ typedef struct datablock_
 
 datablock * datablock_alloc(const char *buf, uint64_t id, uint64_t len, uint64_t busy)
 {
-    datablock *block;
-    size_t size = offsetof(datablock, data) * sizeof(datablock) * len;
-    block = malloc(size);
+    size_t size = offsetof(datablock, data) + sizeof(char) * len;
+    datablock *block = malloc(size);
     if (!block)
         return NULL;
     strncpy(block->data, buf, busy);
+    //for(int i = 0; i < busy; i++)
+        //block->data[i] = buf[i];
+    block->data[busy] = '\0';
     block->id = id;
     block->len = len;
     block->busy_len = busy;

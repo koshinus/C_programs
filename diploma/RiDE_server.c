@@ -53,6 +53,7 @@ static int extract_uint64_from_buf(const char ** buf, uint64_t * num)
         (*buf)++;
     }
     strncpy(for_copying, num_start, (int)(*buf - num_start));
+    for_copying[(int)(*buf - num_start)] = '\0'; // Function "strncpy" does not set null-terminator at end of copying line
     *num = atou64(for_copying);
     (*buf)++;// Skip ':' at end
     return 0;
@@ -60,27 +61,27 @@ static int extract_uint64_from_buf(const char ** buf, uint64_t * num)
 
 static int read_info(const char * buf, uint64_t * id, uint64_t * len, uint64_t * busy, char **addr, char ** data_ptr)
 {
-    int semicolons = 0;
-    char * addr_start = (char *)(buf + 1);
-    int error;
+    int semicolons = 0;                     // Variable for "Transmit" label
+    char * addr_start = (char *)(buf + 1);  // Variable for "Transmit" label
+    int error;                              // Variable for "Place" label
     // Check the first byte in received buffer
     switch(*buf)
     {
         case 'p':
         {
-            printf("Place.\n");
+            //printf("Place.\n");
             buf++; // Skip 'p'
             goto Place;
         }
         case 't':
         {
-            printf("Transmit.\n");
+            //printf("Transmit.\n");
             buf++; // Skip 't'
             goto Transmit;
         }
         default :
         {
-            printf("Error.\n");
+            //printf("Error.\n");
             return UNKNOWN_COMMAND;
         }
     }
@@ -94,14 +95,12 @@ Transmit:
             continue;
         }
         if (!isdigit(*buf) && *buf != '.')
-        {
-            printf("Parsing error: unacceptable symbol in host address.");
             return INCORRECT_ADDR;
-        }
     }
     strncpy(*addr, addr_start, (int)(buf - addr_start));
     buf++; // Skip ':' symbol at end of address
 Place:
+    buf++;
     error = extract_uint64_from_buf(&buf, id);
     if (error)
         return INCORRECT_ID;
@@ -111,51 +110,12 @@ Place:
     error = extract_uint64_from_buf(&buf, busy);
     if (error)
         return INCORRECT_BUSY_SIZE;
+    //printf("Parsing error: unacceptable symbol in host address.");
     //printf("Parsing error: unacceptable symbol in block's id.");
     //printf("Parsing error: unacceptable symbol in block's summary size.");
     //printf("Parsing error: unacceptable symbol in block's busy size.");
     *data_ptr = (char *)buf;
     return PARSING_CORRECT;
-    /*
-    char * id_start = buf, * len_start, * busy_start;
-    char for_copying[100];
-    // Extracting id
-    while(*buf != ':')
-    {
-        if (!isdigit(*buf))
-        {
-            printf("Parsing error: unacceptable symbol in block's id.");
-            return INCORRECT_ID;
-        }
-        buf++;
-    }
-    strncpy(for_copying, id_start, (int)(buf - id_start));
-    *id = atollu(for_copying);
-    // Extracting summary block size
-    while(*buf != ':')
-    {
-        if (!isdigit(*buf))
-        {
-            printf("Parsing error: unacceptable symbol in block's id.");
-            return INCORRECT_SIZE;
-        }
-        buf++;
-    }
-    strncpy(for_copying, id_start, (int)(buf - id_start));
-    *id = atollu(for_copying);
-    // Extracting data size
-    while(*buf != ':')
-    {
-        if (!isdigit(*buf))
-        {
-            printf("Parsing error: unacceptable symbol in block's id.");
-            return INCORRECT_BUSY_SIZE;
-        }
-        buf++;
-    }
-    strncpy(for_copying, id_start, (int)(buf - id_start));
-    *id = atollu(for_copying);
-    */
 }
 
 void process(const char * str)
@@ -199,12 +159,13 @@ void process(const char * str)
     }
     datas[datas_length] = new_data;
     datas_length++;
-    /*
+    // /*
     for(int i = 0; i < datas_length; i++)
-        for(int j = 0; j < datas[i]->busy_len; j++)
-            printf("%c", datas[i]->data[j]);
-    datas_dealloc();
-    */
+        printf("%s", datas[i]->data);
+        //for(int j = 0; j < datas[i]->busy_len; j++)
+            //printf("%c", datas[i]->data[j]);
+    //datas_dealloc();
+    //*/
 }
 
 int main(int argc,char *argv[]) 
@@ -216,5 +177,6 @@ int main(int argc,char *argv[])
     process(str1);
     process(str2);
     process(str3);
+    datas_dealloc();
     return 0;
 }
