@@ -1,8 +1,15 @@
-#include <iostream>
+#include <cstdio>
 #include <cstdlib>
 #include <cstdint>
 #include <cstring>
+#include <sys/types.h>
 using namespace std;
+
+union char_representation
+{
+    uint64_t num;
+    char representation[8];
+};
 
 void fill_buffer(char * buf, uint64_t first, uint64_t second, char * addr, uint8_t addr_len, const char * data)
 {
@@ -37,26 +44,21 @@ void fill_buffer(char * buf, uint64_t first, uint64_t second, char * addr, uint8
 	buf[9] =   second        & 0xFF;
 }
 
-int atollu(const char * str, uint64_t * res)
+typedef struct m_struct_
 {
-    uint64_t cur = *res;
-    while(*str)
-    {
-        if(!isdigit(*str))
-        {
-            *res = cur;
-            return 1;
-        }
-        *res *= 10;
-        *res += *str - 48;
-        str++;
-    }
-    return 0;
+    int id;
+    char data[];
+} m_struct;
+
+m_struct * create(int id_, const char *data_)
+{
+    size_t size = offsetof(m_struct, data_) + sizeof(char) * (strlen(data_) + 1);
+    m_struct *new_struct = malloc(size);
+    strcpy(new_struct->data, data_);
+    return new_struct;
 }
 
 int main()
 {
-    uint64_t res = 0;
-	printf("%lu\n", atollu("36742983d", &res));
-	return 0;
+    return 0;
 }
