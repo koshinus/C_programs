@@ -1,3 +1,5 @@
+// Except header, because in ../test/RiDE_test.cpp file
+// first including is RiDE_server.c which include RiDE_server.h
 //#include "RiDE_server.h"
 
 void fill_buffer(char * buf, char type, uint64_t id, uint64_t offset, 
