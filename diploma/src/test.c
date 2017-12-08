@@ -121,7 +121,7 @@ int too_big_block_alloc()
 {
     datas_configuration();
     char str1[80];
-    fill_buffer(str1, 'a', 0, 0, uint64_t(-1), 0, 0, NULL);
+    fill_buffer(str1, 'a', 0, 0, uint64_t(-1) - 100000, 0, 0, NULL);
     int result = 0;
     result += parse_buffer(str1);
     datas_dealloc();

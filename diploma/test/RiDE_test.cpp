@@ -44,14 +44,10 @@ TEST(RiDE_test, RiDE_repeated_alloc)
     EXPECT_EQ(ALREADY_ALLOCATED, repeated_alloc());
 }
 
-/*
- * Bag: malloc(sizeof(char) * uint64_t(-1)) does not allocate memory
- * 
 TEST(RiDE_test, RiDE_too_big_block_alloc)
 {
     EXPECT_EQ(OUT_OF_MEMORY, too_big_block_alloc());
 }
-*/
 
 TEST(RiDE_test, RiDE_correct_placing)
 {

@@ -47,7 +47,7 @@ union char_representation
 
 datablock * datablock_alloc(uint64_t id, uint64_t len)
 {
-    size_t size = offsetof(datablock, data) + sizeof(char) * (len + 1);
+    size_t size = offsetof(datablock, data) + sizeof(char) * len;
     datablock *block = (datablock *)malloc(size);
     if (!block)
         return NULL;
