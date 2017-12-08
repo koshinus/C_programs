@@ -16,21 +16,63 @@
 
 /*
  * 
+#define ALL_CORRECT         0
+#define UNKNOWN_COMMAND     1
+#define INCORRECT_ID        2
+#define ALREADY_ALLOCATED   3
+#define OUT_OF_MEMORY       4
+#define OUT_OF_RANGE        5
  */
-TEST(RiDE_test, RiDE_memory_managment)
+
+TEST(RiDE_test, RiDE_unknown_command)
 { 
-    ASSERT_EQ(1, unknown_command());
-    //ASSERT_EQ(18.0, squareRoot(324.0));
-    //ASSERT_EQ(25.4, squareRoot(645.16));
-    //ASSERT_EQ(0, squareRoot(0.0));
+    EXPECT_EQ(UNKNOWN_COMMAND, unknown_command());
 }
  
-TEST(RiDE_test, RiDE_network_interaction)
+TEST(RiDE_test, RiDE_simple_alloc)
+{ 
+    EXPECT_EQ(ALL_CORRECT, simple_alloc());
+}
+
+TEST(RiDE_test, RiDE_resize_alloc)
+{ 
+    EXPECT_EQ(ALL_CORRECT, resize_alloc());
+}
+
+TEST(RiDE_test, RiDE_repeated_alloc)
 {
-    //ASSERT_EQ(-1.0, squareRoot(-15.0));
-    //ASSERT_EQ(-1.0, squareRoot(-0.2));
+    EXPECT_EQ(ALREADY_ALLOCATED, repeated_alloc());
 }
- 
+
+/*
+ * Bag: malloc(sizeof(char) * uint64_t(-1)) does not allocate memory
+ * 
+TEST(RiDE_test, RiDE_too_big_block_alloc)
+{
+    EXPECT_EQ(OUT_OF_MEMORY, too_big_block_alloc());
+}
+*/
+
+TEST(RiDE_test, RiDE_correct_placing)
+{
+    EXPECT_EQ(ALL_CORRECT, correct_placing());
+}
+
+TEST(RiDE_test, RiDE_placing_on_wrong_id)
+{
+    EXPECT_EQ(INCORRECT_ID, placing_on_wrong_id());
+}
+
+TEST(RiDE_test, RiDE_placing_out_of_range)
+{
+    EXPECT_EQ(OUT_OF_RANGE, placing_out_of_range());
+}
+
+TEST(RiDE_test, RiDE_placing_with_resize)
+{
+    EXPECT_EQ(ALL_CORRECT, placing_with_resize());
+}
+
 int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);
