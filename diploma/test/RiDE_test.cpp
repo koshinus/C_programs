@@ -26,47 +26,47 @@
 
 TEST(RiDE_test, RiDE_unknown_command)
 { 
-    EXPECT_EQ(UNKNOWN_COMMAND, unknown_command());
+    EXPECT_EQ(ERROR::UNKNOWN_COMMAND, unknown_command());
 }
  
 TEST(RiDE_test, RiDE_simple_alloc)
 { 
-    EXPECT_EQ(ALL_CORRECT, simple_alloc());
+    EXPECT_EQ(ERROR::ALL_CORRECT, simple_alloc());
 }
 
 TEST(RiDE_test, RiDE_resize_alloc)
 { 
-    EXPECT_EQ(ALL_CORRECT, resize_alloc());
+    EXPECT_EQ(ERROR::ALL_CORRECT, resize_alloc());
 }
 
 TEST(RiDE_test, RiDE_repeated_alloc)
 {
-    EXPECT_EQ(ALREADY_ALLOCATED, repeated_alloc());
+    EXPECT_EQ(ERROR::ALREADY_ALLOCATED, repeated_alloc());
 }
 
 TEST(RiDE_test, RiDE_too_big_block_alloc)
 {
-    EXPECT_EQ(OUT_OF_MEMORY, too_big_block_alloc());
+    EXPECT_EQ(ERROR::OUT_OF_MEMORY, too_big_block_alloc());
 }
 
 TEST(RiDE_test, RiDE_correct_placing)
 {
-    EXPECT_EQ(ALL_CORRECT, correct_placing());
+    EXPECT_EQ(ERROR::ALL_CORRECT, correct_placing());
 }
 
 TEST(RiDE_test, RiDE_placing_on_wrong_id)
 {
-    EXPECT_EQ(INCORRECT_ID, placing_on_wrong_id());
+    EXPECT_EQ(ERROR::INCORRECT_ID, placing_on_wrong_id());
 }
 
 TEST(RiDE_test, RiDE_placing_out_of_range)
 {
-    EXPECT_EQ(OUT_OF_RANGE, placing_out_of_range());
+    EXPECT_EQ(ERROR::OUT_OF_RANGE, placing_out_of_range());
 }
 
 TEST(RiDE_test, RiDE_placing_with_resize)
 {
-    EXPECT_EQ(ALL_CORRECT, placing_with_resize());
+    EXPECT_EQ(ERROR::ALL_CORRECT, placing_with_resize());
 }
 
 int main(int argc, char **argv)

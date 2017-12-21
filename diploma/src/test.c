@@ -66,27 +66,27 @@ void fill_buffer(char * buf, char type, uint64_t id, uint64_t offset,
     }
 }
 
-int unknown_command()
+ERROR unknown_command()
 {
     datas_configuration();
     char str[80];
     fill_buffer(str, 'd', 0, 0, 100, 0, 0, NULL);
-    int result = parse_buffer(str);
+    ERROR result = parse_buffer(str);
     datas_dealloc();
     return result;
 }
 
-int simple_alloc()
+ERROR simple_alloc()
 {
     datas_configuration();
     char str[80];
     fill_buffer(str, 'a', 0, 0, 100, 0, 0, NULL);
-    int result = parse_buffer(str);
+    ERROR result = parse_buffer(str);
     datas_dealloc();
     return result;
 }
 
-int resize_alloc()
+ERROR resize_alloc()
 {
     datas_configuration();
     char str1[80];
@@ -96,14 +96,14 @@ int resize_alloc()
     fill_buffer(str2, 'a', 1, 0, 100, 0, 0, NULL);
     fill_buffer(str3, 'a', 2, 0, 100, 0, 0, NULL);
     int result = 0;
-    result += parse_buffer(str1);
-    result += parse_buffer(str2);
-    result += parse_buffer(str3);
+    result += (int)parse_buffer(str1);
+    result += (int)parse_buffer(str2);
+    result += (int)parse_buffer(str3);
     datas_dealloc();
-    return result;
+    return (ERROR)result;
 }
 
-int repeated_alloc()
+ERROR repeated_alloc()
 {
     datas_configuration();
     char str1[80];
@@ -111,24 +111,24 @@ int repeated_alloc()
     fill_buffer(str1, 'a', 0, 0, 100, 0, 0, NULL);
     fill_buffer(str2, 'a', 0, 0, 100, 0, 0, NULL);
     int result = 0;
-    result += parse_buffer(str1);
-    result += parse_buffer(str2);
+    result += (int)parse_buffer(str1);
+    result += (int)parse_buffer(str2);
     datas_dealloc();
-    return result;
+    return (ERROR)result;
 }
 
-int too_big_block_alloc()
+ERROR too_big_block_alloc()
 {
     datas_configuration();
     char str1[80];
     fill_buffer(str1, 'a', 0, 0, uint64_t(-1) - 100000, 0, 0, NULL);
     int result = 0;
-    result += parse_buffer(str1);
+    result += (int)parse_buffer(str1);
     datas_dealloc();
-    return result;
+    return (ERROR)result;
 }
 
-int correct_placing()
+ERROR correct_placing()
 {
     datas_configuration();
     char str1[80];
@@ -136,24 +136,24 @@ int correct_placing()
     fill_buffer(str1, 'a', 0, 0, 100, 0, 0, NULL);
     fill_buffer(str2, 'p', 0, 0,   7, 0, 0, (char *)"Hello, ");
     int result = 0;
-    result += parse_buffer(str1);
-    result += parse_buffer(str2);
+    result += (int)parse_buffer(str1);
+    result += (int)parse_buffer(str2);
     datas_dealloc();
-    return result;
+    return (ERROR)result;
 }
 
-int placing_on_wrong_id()
+ERROR placing_on_wrong_id()
 {
     datas_configuration();
     char str1[80];
     fill_buffer(str1, 'p', 0, 0, 7, 0, 0, (char *)"Hello, ");
     int result = 0;
-    result += parse_buffer(str1);
+    result += (int)parse_buffer(str1);
     datas_dealloc();
-    return result;
+    return (ERROR)result;
 }
 
-int placing_out_of_range()
+ERROR placing_out_of_range()
 {
     datas_configuration();
     char str1[80];
@@ -161,13 +161,13 @@ int placing_out_of_range()
     fill_buffer(str1, 'a', 0, 100, 0, 0, 0, NULL);
     fill_buffer(str2, 'p', 0, 100, 99, 10, 0, NULL);
     int result = 0;
-    result += parse_buffer(str1);
-    result += parse_buffer(str2);
+    result += (int)parse_buffer(str1);
+    result += (int)parse_buffer(str2);
     datas_dealloc();
-    return result;
+    return (ERROR)result;
 }
 
-int placing_with_resize()
+ERROR placing_with_resize()
 {
     datas_configuration();
     char str1[80];
@@ -175,14 +175,14 @@ int placing_with_resize()
     fill_buffer(str1, 'a', 0, 0, 100, 0, 0, NULL);
     fill_buffer(str2, 'a', 1, 0, 100, 0, 0, NULL);
     int result = 0;
-    result += parse_buffer(str1);
-    result += parse_buffer(str2);
+    result += (int)parse_buffer(str1);
+    result += (int)parse_buffer(str2);
     fill_buffer(str1, 'p', 0, 0, 7, 0, 0, (char *)"Hello, ");
     fill_buffer(str2, 'p', 1, 0, 7, 0, 0, (char *)"World! ");
-    result += parse_buffer(str1);
-    result += parse_buffer(str2);
+    result += (int)parse_buffer(str1);
+    result += (int)parse_buffer(str2);
     fill_buffer(str1, 'a', 2, 0, 100, 0, 0, NULL);
-    result += parse_buffer(str1);
+    result += (int)parse_buffer(str1);
     datas_dealloc();
-    return result;
+    return (ERROR)result;
 }

@@ -7,12 +7,25 @@
 #include <stdlib.h>
 #include <uv.h>
 
+/*
 #define ALL_CORRECT         0
 #define UNKNOWN_COMMAND     1
 #define INCORRECT_ID        2
 #define ALREADY_ALLOCATED   3
 #define OUT_OF_MEMORY       4
 #define OUT_OF_RANGE        5
+*/
+
+typedef enum err {ALL_CORRECT, UNKNOWN_COMMAND, INCORRECT_ID, ALREADY_ALLOCATED, OUT_OF_MEMORY, OUT_OF_RANGE} ERROR;
+
+const char * error_messages[] = 
+{
+    "INCORRECT_ID: please check the datablock id.\n",
+    "ALREADY_ALLOCATED: datablock with this id already exist.\n",
+    "OUT_OF_MEMORY: system haven't enough memory to allocate this datablock.\n",
+    "UNKNOWN_COMMAND: wrong first symbol in received message.\n",
+    "OUT_OF_RANGE: please check offset and data length of delivered message.\n"
+};
 
 typedef union num_representation_64
 {
@@ -62,8 +75,8 @@ uint64_t      datas_length;
 
 void datas_configuration();
 void datas_dealloc();
-void raise_an_error(int error_type);
-/*void*/int transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length);
-/*void*/int place(uint64_t id, uint64_t offset, uint64_t length, char * data_ptr);
-/*void*/int allocate(uint64_t id, uint64_t length);
-/*void*/int parse_buffer(const char * buf);
+void raise_an_error(ERROR error_type);
+/*void*/ERROR transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length);
+/*void*/ERROR place(uint64_t id, uint64_t offset, uint64_t length, char * data_ptr);
+/*void*/ERROR allocate(uint64_t id, uint64_t length);
+/*void*/ERROR parse_buffer(const char * buf);

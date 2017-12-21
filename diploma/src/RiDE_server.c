@@ -14,46 +14,18 @@ void datas_configuration()
     datas = (datablock **)malloc(sizeof(datablock *) * datas_capacity);
 }
 
-void raise_an_error(int error_type)
+void raise_an_error(ERROR error_type)
 {
     printf("Error of type ");
-    switch (error_type)
-    {
-        case INCORRECT_ID:
-        {
-            printf("INCORRECT_ID: please check the datablock id.\n");
-            break;
-        }
-        case ALREADY_ALLOCATED:
-        {
-            printf("ALREADY_ALLOCATED: datablock with this id already exist.\n");
-            break;
-        }
-        case OUT_OF_MEMORY:
-        {
-            printf("OUT_OF_MEMORY: system haven't enough memory to allocate this datablock.\n");
-            break;
-        }
-        case UNKNOWN_COMMAND:
-        {
-            printf("UNKNOWN_COMMAND: wrong first symbol in received message.\n");
-            break;
-        }
-        case OUT_OF_RANGE:
-        {
-            printf("OUT_OF_RANGE: please check offset and data length of delivered message.\n");
-            break;
-        }
-        default: break;
-    }
+    printf("%s", error_messages[(int)error_type]);
 }
 
-/*void*/int transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length)
+/*void*/ERROR transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length)
 {
-    return 0;
+    return ALL_CORRECT;
 }
 
-/*void*/int place(uint64_t id, uint64_t offset, uint64_t length, char * data_ptr)
+/*void*/ERROR place(uint64_t id, uint64_t offset, uint64_t length, char * data_ptr)
 {
     for(uint64_t i = 0; i < datas_length; i++)
         if(datas[i]->id == id)
@@ -72,7 +44,7 @@ void raise_an_error(int error_type)
     return INCORRECT_ID;
 }
 
-/*void*/int allocate(uint64_t id, uint64_t length)
+/*void*/ERROR allocate(uint64_t id, uint64_t length)
 {
     for(uint64_t i = 0; i < datas_length; i++)
         if(datas[i]->id == id)
@@ -100,7 +72,8 @@ void raise_an_error(int error_type)
         /*
         datas = (datablock **)realloc(datas, datas_capacity);
         if(!datas)
-            raise_an_error(OUT_OF_MEMORY);
+            //raise_an_error(OUT_OF_MEMORY);
+            return ERRORS.OUT_OF_MEMORY;
         //*/
     }
     datas[datas_length] = block;
@@ -108,7 +81,7 @@ void raise_an_error(int error_type)
     return ALL_CORRECT;
 }
 
-/*void*/int parse_buffer(const char * buf)
+/*void*/ERROR parse_buffer(const char * buf)
 {
     uint64_t id, offset, length;
     uint32_t host_addr;
