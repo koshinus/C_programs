@@ -16,7 +16,7 @@
 #define OUT_OF_RANGE        5
 */
 
-typedef enum err {ALL_CORRECT, UNKNOWN_COMMAND, INCORRECT_ID, ALREADY_ALLOCATED, OUT_OF_MEMORY, OUT_OF_RANGE} ERROR;
+typedef enum err {ALL_CORRECT, UNKNOWN_COMMAND, INCORRECT_ID, ALREADY_ALLOCATED, OUT_OF_MEMORY, OUT_OF_RANGE} ERRORS;
 
 const char * error_messages[] = 
 {
@@ -75,8 +75,8 @@ uint64_t      datas_length;
 
 void datas_configuration();
 void datas_dealloc();
-void raise_an_error(ERROR error_type);
-/*void*/ERROR transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length);
-/*void*/ERROR place(uint64_t id, uint64_t offset, uint64_t length, char * data_ptr);
-/*void*/ERROR allocate(uint64_t id, uint64_t length);
-/*void*/ERROR parse_buffer(const char * buf);
+void raise_an_error(ERRORS error_type);
+/*void*/ERRORS transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length);
+/*void*/ERRORS place(uint64_t id, uint64_t offset, uint64_t length, char * data_ptr);
+/*void*/ERRORS allocate(uint64_t id, uint64_t length);
+/*void*/ERRORS parse_buffer(const char * buf);

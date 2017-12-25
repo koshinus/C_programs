@@ -14,18 +14,18 @@ void datas_configuration()
     datas = (datablock **)malloc(sizeof(datablock *) * datas_capacity);
 }
 
-void raise_an_error(ERROR error_type)
+void raise_an_error(ERRORS error_type)
 {
     printf("Error of type ");
     printf("%s", error_messages[(int)error_type]);
 }
 
-/*void*/ERROR transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length)
+/*void*/ERRORS transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length)
 {
     return ALL_CORRECT;
 }
 
-/*void*/ERROR place(uint64_t id, uint64_t offset, uint64_t length, char * data_ptr)
+/*void*/ERRORS place(uint64_t id, uint64_t offset, uint64_t length, char * data_ptr)
 {
     for(uint64_t i = 0; i < datas_length; i++)
         if(datas[i]->id == id)
@@ -44,7 +44,7 @@ void raise_an_error(ERROR error_type)
     return INCORRECT_ID;
 }
 
-/*void*/ERROR allocate(uint64_t id, uint64_t length)
+/*void*/ERRORS allocate(uint64_t id, uint64_t length)
 {
     for(uint64_t i = 0; i < datas_length; i++)
         if(datas[i]->id == id)
@@ -81,7 +81,7 @@ void raise_an_error(ERROR error_type)
     return ALL_CORRECT;
 }
 
-/*void*/ERROR parse_buffer(const char * buf)
+/*void*/ERRORS parse_buffer(const char * buf)
 {
     uint64_t id, offset, length;
     uint32_t host_addr;
