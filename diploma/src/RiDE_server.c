@@ -1,5 +1,12 @@
 #include "RiDE_server.h"
 
+void datas_configuration()
+{
+    datas_capacity = 2;
+    datas_length = 0;
+    datas = (datablock **)malloc(sizeof(datablock *) * datas_capacity);
+}
+
 void datas_dealloc()
 {
     for(uint64_t i = 0; i < datas_length; i++)
@@ -7,11 +14,44 @@ void datas_dealloc()
     free(datas);
 }
 
-void datas_configuration()
+void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const struct sockaddr* addr, unsigned flags)
 {
-    datas_capacity = 2;
-    datas_length = 0;
-    datas = (datablock **)malloc(sizeof(datablock *) * datas_capacity);
+    if (nread > 0)
+    {
+        printf("%ld\n",nread);
+        printf("%s",rcvbuf->base);
+    }
+    printf("free  :%zu %p\n",rcvbuf->len,rcvbuf->base);
+    free(rcvbuf->base);
+}
+
+void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf)
+{
+    buf->base = malloc(suggested_size);
+    buf->len = suggested_size;
+    printf("malloc:%zu %p\n",buf->len,buf->base);
+}
+
+void server_start()
+{
+    datas_configuration();
+    int status;
+    struct sockaddr_in addr;
+    event_loop = uv_default_loop();
+    status = uv_udp_init(event_loop, &recv_socket);
+    status = uv_ip4_addr("127.0.0.1", 11000, &addr);
+
+    status = uv_udp_bind(&recv_socket, (const struct sockaddr *)&addr, UV_UDP_REUSEADDR);
+    
+    status = uv_udp_recv_start(&recv_socket, on_alloc, on_recv);
+    
+    uv_run(event_loop, UV_RUN_DEFAULT);
+}
+
+void server_stop()
+{
+    uv_udp_recv_stop(&recv_socket);
+    datas_dealloc();
 }
 
 void raise_an_error(ERRORS error_type)
@@ -22,6 +62,15 @@ void raise_an_error(ERRORS error_type)
 
 /*void*/ERRORS transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length)
 {
+    uv_udp_t send_socket;
+    struct in_addr ip_addr;
+    ip_addr.s_addr = addr;
+    struct sockaddr_in send_addr;
+    
+    uv_udp_init(event_loop, &send_socket);
+    uv_ip4_addr(inet_ntoa(ip_addr), port, &send_addr);
+    uv_udp_bind(&send_socket, (const struct sockaddr *)&send_addr, 0);
+    uv_udp_set_broadcast(&send_socket, 1);
     return ALL_CORRECT;
 }
 

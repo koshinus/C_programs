@@ -11,19 +11,7 @@
  * Created on 7 декабря 2017 г., 6:36
  */
 #include "../src/RiDE_server.c"
-//#include "../src/test.c"
 #include <gtest/gtest.h>
-
-/*
- * 
-#define ALL_CORRECT         0
-#define UNKNOWN_COMMAND     1
-#define INCORRECT_ID        2
-#define ALREADY_ALLOCATED   3
-#define OUT_OF_MEMORY       4
-#define OUT_OF_RANGE        5
- */
-
 
 void fill_buffer(char * buf, char type, uint64_t id, uint64_t offset, 
         uint64_t len, uint32_t address, uint16_t port, char * data)

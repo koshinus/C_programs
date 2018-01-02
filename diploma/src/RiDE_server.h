@@ -1,20 +1,11 @@
 #pragma once
 
+#include <uv.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <uv.h>
-
-/*
-#define ALL_CORRECT         0
-#define UNKNOWN_COMMAND     1
-#define INCORRECT_ID        2
-#define ALREADY_ALLOCATED   3
-#define OUT_OF_MEMORY       4
-#define OUT_OF_RANGE        5
-*/
 
 typedef enum err {ALL_CORRECT, UNKNOWN_COMMAND, INCORRECT_ID, ALREADY_ALLOCATED, OUT_OF_MEMORY, OUT_OF_RANGE} ERRORS;
 
@@ -69,13 +60,22 @@ datablock * datablock_alloc(uint64_t id, uint64_t len)
     return block;
 }
 
-datablock *        * datas;
-uint64_t    datas_capacity;
-uint64_t      datas_length;
+//Server strucures
+//--------------------------------------
+datablock *   * datas;
+uint64_t        datas_capacity;
+uint64_t        datas_length;
+uv_loop_t     * event_loop;
+uv_udp_t        recv_socket;
+//--------------------------------------
 
 void datas_configuration();
 void datas_dealloc();
+void server_start();
+void server_stop();
 void raise_an_error(ERRORS error_type);
+void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf);
+void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const struct sockaddr* addr, unsigned flags);
 /*void*/ERRORS transmit(uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length);
 /*void*/ERRORS place(uint64_t id, uint64_t offset, uint64_t length, char * data_ptr);
 /*void*/ERRORS allocate(uint64_t id, uint64_t length);
