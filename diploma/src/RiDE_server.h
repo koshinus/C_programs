@@ -9,7 +9,7 @@
 
 typedef enum err {ALL_CORRECT, UNKNOWN_COMMAND, INCORRECT_ID, ALREADY_ALLOCATED, OUT_OF_MEMORY, OUT_OF_RANGE} ERRORS;
 
-const char * error_messages[] = 
+const char * error_messages[] =
 {
     "INCORRECT_ID: please check the datablock id.\n",
     "ALREADY_ALLOCATED: datablock with this id already exist.\n",
@@ -58,6 +58,11 @@ datablock * datablock_alloc(uint64_t id, uint64_t len)
     block->id = id;
     block->len = len;
     return block;
+}
+
+void datablock_dealloc(datablock * block)
+{
+    free(block);
 }
 
 //Server strucures

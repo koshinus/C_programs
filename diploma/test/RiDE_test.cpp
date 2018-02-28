@@ -49,7 +49,7 @@ void fill_buffer(char * buf, char type, uint64_t id, uint64_t offset,
                 buf[i+17] = nr3.representation[i];
             }
             full_offset = sizeof(type) + sizeof(id) + sizeof(offset) + 
-                            sizeof(len) + offset; 
+                            sizeof(len) + offset;
             strncpy(buf + full_offset, data, len);
             break;
         }
@@ -155,10 +155,10 @@ TEST(RiDE_test, RiDE_placing_on_wrong_id)
 TEST(RiDE_test, RiDE_placing_out_of_range)
 {
     datas_configuration();
-    char str1[80];
-    char str2[80];
+    char str1[400];
+    char str2[400];
     fill_buffer(str1, 'a', 0, 100, 0, 0, 0, NULL);
-    fill_buffer(str2, 'p', 0, 100, 99, 10, 0, NULL);
+    fill_buffer(str2, 'p', 0, 100, 99, 8, 0, (char *)"Hello, ");
     EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str1));
     EXPECT_EQ(ERRORS::OUT_OF_RANGE, parse_buffer(str2));
     datas_dealloc();

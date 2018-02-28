@@ -10,7 +10,7 @@ void datas_configuration()
 void datas_dealloc()
 {
     for(uint64_t i = 0; i < datas_length; i++)
-        free(datas[i]);
+        datablock_dealloc(datas[i]);
     free(datas);
 }
 
@@ -27,7 +27,7 @@ void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const stru
 
 void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf)
 {
-    buf->base = malloc(suggested_size);
+    buf->base = (char *)malloc(suggested_size);
     buf->len = suggested_size;
     printf("malloc:%zu %p\n",buf->len,buf->base);
 }
@@ -44,6 +44,8 @@ void server_start()
     status = uv_udp_bind(&recv_socket, (const struct sockaddr *)&addr, UV_UDP_REUSEADDR);
     
     status = uv_udp_recv_start(&recv_socket, on_alloc, on_recv);
+
+    printf("%i", status);
     
     uv_run(event_loop, UV_RUN_DEFAULT);
 }
