@@ -79,106 +79,106 @@ void fill_buffer(char * buf, char type, uint64_t id, uint64_t offset,
 
 TEST(RiDE_test, RiDE_unknown_command)
 {
-    datas_configuration();
+    datas_configure();
     char str[80];
     fill_buffer(str, 'd', 0, 0, 100, 0, 0, NULL);
-    EXPECT_EQ(ERRORS::UNKNOWN_COMMAND, parse_buffer(str));
+    EXPECT_EQ(ERROR::UNKNOWN_COMMAND, parse_buffer(str));
     datas_dealloc();
 }
  
 TEST(RiDE_test, RiDE_simple_alloc)
 {
-    datas_configuration();
+    datas_configure();
     char str[80];
     fill_buffer(str, 'a', 0, 0, 100, 0, 0, NULL);
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str));
     datas_dealloc();
 }
 
 TEST(RiDE_test, RiDE_resize_alloc)
 {
-    datas_configuration();
+    datas_configure();
     char str1[80];
     char str2[80];
     char str3[80];
     fill_buffer(str1, 'a', 0, 0, 100, 0, 0, NULL);
     fill_buffer(str2, 'a', 1, 0, 100, 0, 0, NULL);
     fill_buffer(str3, 'a', 2, 0, 100, 0, 0, NULL);
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str1));
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str2));
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str3));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str1));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str2));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str3));
     datas_dealloc();
 }
 
 TEST(RiDE_test, RiDE_repeated_alloc)
 {
-    datas_configuration();
+    datas_configure();
     char str1[80];
     char str2[80];
     fill_buffer(str1, 'a', 0, 0, 100, 0, 0, NULL);
     fill_buffer(str2, 'a', 0, 0, 100, 0, 0, NULL);
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str1));
-    EXPECT_EQ(ERRORS::ALREADY_ALLOCATED, parse_buffer(str2));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str1));
+    EXPECT_EQ(ERROR::ALREADY_ALLOCATED, parse_buffer(str2));
     datas_dealloc();
 }
 
 TEST(RiDE_test, RiDE_too_big_block_alloc)
 {
-    datas_configuration();
+    datas_configure();
     char str1[80];
     fill_buffer(str1, 'a', 0, 0, uint64_t(-1) - 100000, 0, 0, NULL);
-    EXPECT_EQ(ERRORS::OUT_OF_MEMORY, parse_buffer(str1));
+    EXPECT_EQ(ERROR::OUT_OF_MEMORY, parse_buffer(str1));
     datas_dealloc();
 }
 
 TEST(RiDE_test, RiDE_correct_placing)
 {
-    datas_configuration();
+    datas_configure();
     char str1[80];
     char str2[80];
     fill_buffer(str1, 'a', 0, 0, 100, 0, 0, NULL);
     fill_buffer(str2, 'p', 0, 0,   7, 0, 0, (char *)"Hello, ");
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str1));
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str2));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str1));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str2));
     datas_dealloc();
 }
 
 TEST(RiDE_test, RiDE_placing_on_wrong_id)
 {
-    datas_configuration();
+    datas_configure();
     char str1[80];
     fill_buffer(str1, 'p', 0, 0, 7, 0, 0, (char *)"Hello, ");
-    EXPECT_EQ(ERRORS::INCORRECT_ID, parse_buffer(str1));
+    EXPECT_EQ(ERROR::INCORRECT_ID, parse_buffer(str1));
     datas_dealloc();
 }
 
 TEST(RiDE_test, RiDE_placing_out_of_range)
 {
-    datas_configuration();
-    char str1[400];
-    char str2[400];
+    datas_configure();
+    char str1[300];
+    char str2[300];
     fill_buffer(str1, 'a', 0, 100, 0, 0, 0, NULL);
     fill_buffer(str2, 'p', 0, 100, 99, 8, 0, (char *)"Hello, ");
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str1));
-    EXPECT_EQ(ERRORS::OUT_OF_RANGE, parse_buffer(str2));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str1));
+    EXPECT_EQ(ERROR::OUT_OF_RANGE, parse_buffer(str2));
     datas_dealloc();
 }
 
 TEST(RiDE_test, RiDE_placing_with_resize)
 {
-    datas_configuration();
+    datas_configure();
     char str1[80];
     char str2[80];
     fill_buffer(str1, 'a', 0, 0, 100, 0, 0, NULL);
     fill_buffer(str2, 'a', 1, 0, 100, 0, 0, NULL);
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str1));
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str2));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str1));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str2));
     fill_buffer(str1, 'p', 0, 0, 7, 0, 0, (char *)"Hello, ");
     fill_buffer(str2, 'p', 1, 0, 7, 0, 0, (char *)"World! ");
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str1));
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str2));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str1));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str2));
     fill_buffer(str1, 'a', 2, 0, 100, 0, 0, NULL);
-    EXPECT_EQ(ERRORS::ALL_CORRECT, parse_buffer(str1));
+    EXPECT_EQ(ERROR::ALL_CORRECT, parse_buffer(str1));
     datas_dealloc();
 }
 
