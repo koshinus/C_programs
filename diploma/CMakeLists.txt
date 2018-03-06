@@ -5,4 +5,4 @@ cmake_minimum_required(VERSION 3.5)
 # Server compiled with GCC (11 standard), and GTests with G++ (14 standard)
 
 add_subdirectory(src)
-add_subdirectory(test)
+#add_subdirectory(test)

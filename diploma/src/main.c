@@ -10,14 +10,23 @@
  *
  * Created on 7 декабря 2017 г., 7:23
  */
-//#include "RiDE_server.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "RiDE_server.h"
+#include <time.h>
 
 /*
  * 
  */
-int main(int argc, char** argv) {
-
-    return (EXIT_SUCCESS);
+int main(int argc, char** argv)
+{
+    RiDE_logger * logger;
+    logger->open(logger);
+    while(1)
+    {
+        if (!server->started)
+            server->start(server, logger);
+        if (clock() - logger->log_creation_time >= logger->MAX_LOG_TIME)
+            logger->reopen(logger);
+    }
+    logger->close(logger);
+    return 0;
 }
