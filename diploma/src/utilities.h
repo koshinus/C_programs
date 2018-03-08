@@ -5,16 +5,7 @@
 
 typedef enum err {ALL_CORRECT, UNKNOWN_COMMAND, INCORRECT_ID, ALREADY_ALLOCATED, OUT_OF_MEMORY, OUT_OF_RANGE, NO_DATA_RECEIVED} ERROR;
 
-const char * error_messages[] =
-{
-    "ALL_CORRECT: everything is fine.\n",
-    "UNKNOWN_COMMAND: wrong first symbol in received message.\n",
-    "INCORRECT_ID: please check the datablock id.\n",
-    "ALREADY_ALLOCATED: datablock with this id already exist.\n",
-    "OUT_OF_MEMORY: system haven't enough memory to allocate this datablock.\n",
-    "OUT_OF_RANGE: please check offset and data length of delivered message.\n",
-    "NO_DATA_RECEIVED: received message have no data.\n"
-};
+const char * error_messages[7];
 
 typedef union num_representation_64
 {
