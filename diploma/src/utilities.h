@@ -1,4 +1,7 @@
 #pragma once
+#include <endian.h>
+#include <stdint.h>
+#include <string.h>
 
 typedef enum err {ALL_CORRECT, UNKNOWN_COMMAND, INCORRECT_ID, ALREADY_ALLOCATED, OUT_OF_MEMORY, OUT_OF_RANGE, NO_DATA_RECEIVED} ERROR;
 
@@ -38,6 +41,7 @@ union char_representation
     char representation[8];
 };
 */
+/*
 void fill_buffer(char * buf, char type, uint64_t id, uint64_t offset,
         uint64_t len, uint32_t address, uint16_t port, char * data)
 {
@@ -101,3 +105,4 @@ void fill_buffer(char * buf, char type, uint64_t id, uint64_t offset,
         default : break;
     }
 }
+*/

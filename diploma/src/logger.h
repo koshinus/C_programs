@@ -5,18 +5,18 @@
 #include <stdint.h>
 #include "utilities.h"
 
-struct RiDE_logger
+typedef struct RiDE_logger_
 {
-    const uint64_t MAX_LOG_TIME = 10*60*60; // 10 hours
-    const uint64_t MAX_LOG_SIZE = 100*1024*1024; // 100 Mb
+    uint64_t MAX_LOG_TIME;// = 10*60*60; // 10 hours
+    uint64_t MAX_LOG_SIZE;// = 100*1024*1024; // 100 Mb
     FILE * log_file;
     time_t log_creation_time;
     uint64_t current_log_size;
-    void (* open)(RiDE_logger * log);
-    void (* close)(RiDE_logger * log);
-    void (* reopen)(RiDE_logger * log);
-    void (* log)(RiDE_logger * log, ERROR error_type);
-};
+    void (* open)(struct RiDE_logger_ * log);
+    void (* close)(struct RiDE_logger_ * log);
+    void (* reopen)(struct RiDE_logger_ * log);
+    void (* logging)(struct RiDE_logger_ * log, ERROR error_type);
+} RiDE_logger;
 
 void open_log_file(RiDE_logger * log);
 void close_log_file(RiDE_logger * log);

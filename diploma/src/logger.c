@@ -5,7 +5,7 @@ void open_log_file(RiDE_logger * log)
     char filename[40];
     struct tm *timenow;
     log->log_creation_time = time(NULL);
-    timenow = gmtime(&log_creation_time);
+    timenow = gmtime(&log->log_creation_time);
     strftime(filename, sizeof(filename), "log/SERVER_%Y-%m-%d_%H:%M:%S", timenow);
     log->log_file = fopen(filename, "w");
     log->current_log_size = 0;
@@ -43,5 +43,5 @@ void log_an_error(RiDE_logger *log, ERROR error_type)
     if(log->current_log_size + current_err_msg_size >= log->MAX_LOG_SIZE)
         log->reopen(log);
     log->current_log_size += current_err_msg_size;
-    fprintf(log->log_file, "ERROR| %s of type %s", error_string, error_messages[(int)error_type]);
+    fprintf(log->log_file, "ERROR| %s of type %s", time_string, error_messages[(int)error_type]);
 }

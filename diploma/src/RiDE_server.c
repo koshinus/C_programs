@@ -1,4 +1,4 @@
-#include <stdio.h>
+//#include <stdio.h>
 
 #include "RiDE_server.h"
 
@@ -19,9 +19,9 @@ void datas_reset(RiDE_server * server)
 void on_recieve(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const struct sockaddr* addr, unsigned flags)
 {
     if (nread > 0)
-        server->parse(server, rcvbuf);
+        server->parse(server, rcvbuf->base);
     else
-        server->logger->log(logger, NO_DATA_RECEIVED);
+        server->logger->logging(server->logger, NO_DATA_RECEIVED);
     //printf("free  :%zu %p\n",rcvbuf->len,rcvbuf->base);
     free(rcvbuf->base);
 }
@@ -39,17 +39,18 @@ void on_sending(uv_udp_send_t* req, int status)
 
 }
 
-void server_start(RiDE_server * server)
+void server_start(RiDE_server * server, RiDE_logger * logger)
 {
-    datas_configure(server);
+    server->logger = logger;
+    server->configure(server);
     server->started = 1; // started = true
-    int status;
+    //int status;
     struct sockaddr_in addr;
     server->event_loop = uv_default_loop();
-    uv_udp_init(event_loop, &recv_socket);
+    uv_udp_init(server->event_loop, &server->recv_socket);
     uv_ip4_addr("127.0.0.1", 11000, &addr);
     uv_udp_bind(&server->recv_socket, (const struct sockaddr *)&addr, UV_UDP_REUSEADDR);
-    uv_udp_recv_start(&server->recv_socket, on_allocate, on_receive);
+    uv_udp_recv_start(&server->recv_socket, server->on_alloc, server->on_recv);
     uv_run(server->event_loop, UV_RUN_DEFAULT);
 }
 
@@ -57,33 +58,33 @@ void server_stop(RiDE_server * server)
 {
     uv_udp_recv_stop(&server->recv_socket);
     server->started = 0; // started = false
-    datas_dealloc(server);
+    server->reset(server);
 }
 
 void/*ERROR*/ transmition(RiDE_server * server, uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length)
 {
-    uv_udp_t send_socket;
+    uv_udp_send_t send_socket;
     struct in_addr ip_addr;
     ip_addr.s_addr = addr;
     struct sockaddr_in send_addr;
     
-    uv_udp_init(event_loop, &send_socket);
+    uv_udp_init(server->event_loop, &send_socket);
     uv_ip4_addr(inet_ntoa(ip_addr), port, &send_addr);
     uv_udp_bind(&send_socket, (const struct sockaddr *)&send_addr, 0);
     uv_udp_set_broadcast(&send_socket, 1);
     uv_buf_t * send_buf;
     for (uint64_t i = 0; i < server->datas_length; i++)
     {
-        if (server->datas[i].id == id)
+        if (server->datas[i]->id == id)
         {
-            strncpy(send_buf->base, server->datas[id].data + offset, length + 1);
+            strncpy(send_buf->base, server->datas[id]->data + offset, length + 1);
             send_buf->len = length;
             send_buf->base[length] = '\0';
-            uv_udp_send(&send_socket, &server->recv_socket, (const uv_buf_t *)send_buf, 1, send_addr, on_sending);
+            uv_udp_send(&send_socket, &server->recv_socket, (const uv_buf_t *)send_buf, 1, (const struct sockaddr *)&send_addr, server->on_send);
             break;
         }
         else
-            server->logger->log(server->logger, INCORRECT_ID);
+            server->logger->logging(server->logger, INCORRECT_ID);
     }
     //return ALL_CORRECT;
 }
@@ -95,7 +96,7 @@ void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t offset, uint64
         {
             if(server->datas[i]->len < offset + length)
             {
-                server->logger->log(server->logger, OUT_OF_RANGE);
+                server->logger->logging(server->logger, OUT_OF_RANGE);
                 return;
                 //return OUT_OF_RANGE;
             }
@@ -106,7 +107,7 @@ void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t offset, uint64
                 //return ALL_CORRECT;
             }
         }
-    server->logger->log(server->logger, INCORRECT_ID);
+    server->logger->logging(server->logger, INCORRECT_ID);
     return;
     //return INCORRECT_ID;
 }
@@ -116,7 +117,7 @@ void/*ERROR*/ allocation(RiDE_server * server, uint64_t id, uint64_t length)
     for(uint64_t i = 0; i < server->datas_length; i++)
         if(server->datas[i]->id == id)
         {
-            server->logger->log(server->logger, ALREADY_ALLOCATED);
+            server->logger->logging(server->logger, ALREADY_ALLOCATED);
             return;
             //return ALREADY_ALLOCATED;
         }
@@ -125,7 +126,7 @@ void/*ERROR*/ allocation(RiDE_server * server, uint64_t id, uint64_t length)
     // if system haven't enough memory for allocation
     if (!block)
     {
-        server->logger->log(server->logger, OUT_OF_MEMORY);
+        server->logger->logging(server->logger, OUT_OF_MEMORY);
         return;
         //return OUT_OF_MEMORY;
     }
@@ -133,10 +134,10 @@ void/*ERROR*/ allocation(RiDE_server * server, uint64_t id, uint64_t length)
     {
         server->datas_capacity *= 2;
         ///*
-        datablock ** new_datas = (datablock **)malloc(sizeof(datablock*) * datas_capacity);
+        datablock ** new_datas = (datablock **)malloc(sizeof(datablock*) * server->datas_capacity);
         if(!new_datas)
         {
-            server->logger->log(server->logger, OUT_OF_MEMORY);
+            server->logger->logging(server->logger, OUT_OF_MEMORY);
             return;
             //return OUT_OF_MEMORY;
         }
@@ -202,7 +203,7 @@ void/*ERROR*/ parse_buffer(RiDE_server * server, const char * buf)
             break;
         }
         default :
-            server->logger->log(server->logger, UNKNOWN_COMMAND);
+            server->logger->logging(server->logger, UNKNOWN_COMMAND);
             //return UNKNOWN_COMMAND;
             break;
     }

@@ -18,7 +18,21 @@
  */
 int main(int argc, char** argv)
 {
-    RiDE_logger * logger;
+    RiDE_logger * logger = &(RiDE_logger)
+    {
+            .MAX_LOG_TIME = 10*10*1024, .MAX_LOG_SIZE = 100*1024*1024,
+            .open = open_log_file, .close = close_log_file,
+            .reopen = reopen_log_file, .logging = log_an_error
+    };
+    server = &(RiDE_server)
+    {
+            .start = server_start, .stop = server_stop,
+            .configure = datas_configure, .reset = datas_reset,
+            .on_alloc = on_allocate, .on_recv = on_recieve,
+            .on_send = on_sending, .transmit = transmition,
+            .place = placing, .parse = parse_buffer,
+            .alloc = allocation
+    };
     logger->open(logger);
     while(1)
     {

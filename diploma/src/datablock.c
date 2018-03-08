@@ -1,4 +1,6 @@
 #include "datablock.h"
+#include <stdlib.h>
+#include <stddef.h>
 
 datablock * datablock_alloc(uint64_t id, uint64_t len)
 {
