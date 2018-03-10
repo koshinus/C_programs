@@ -45,3 +45,8 @@ void log_an_error(RiDE_logger *log, ERROR error_type)
     log->current_log_size += current_err_msg_size;
     fprintf(log->log_file, "ERROR| %s of type %s", time_string, error_messages[(int)error_type]);
 }
+
+int time_to_close(RiDE_logger * log)
+{
+    return clock() - log->log_creation_time >= log->MAX_LOG_TIME;
+}

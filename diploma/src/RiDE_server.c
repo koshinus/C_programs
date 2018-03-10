@@ -1,5 +1,3 @@
-//#include <stdio.h>
-
 #include "RiDE_server.h"
 
 void datas_configure(RiDE_server * server)
@@ -22,7 +20,6 @@ void on_recieve(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const s
         server->parse(server, rcvbuf->base);
     else
         server->logger->logging(server->logger, NO_DATA_RECEIVED);
-    //printf("free  :%zu %p\n",rcvbuf->len,rcvbuf->base);
     free(rcvbuf->base);
 }
 
@@ -31,7 +28,6 @@ void on_allocate(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf)
     buf->base = (char *)malloc(suggested_size + 1);
     buf->len = suggested_size;
     buf->base[suggested_size] = '\0';
-    //printf("malloc:%zu %p\n",buf->len,buf->base);
 }
 
 void on_sending(uv_udp_send_t* req, int status)
@@ -44,7 +40,6 @@ void server_start(RiDE_server * server, RiDE_logger * logger)
     server->logger = logger;
     server->configure(server);
     server->started = 1; // started = true
-    //int status;
     struct sockaddr_in addr;
     server->event_loop = uv_default_loop();
     uv_udp_init(server->event_loop, &server->recv_socket);
@@ -77,11 +72,12 @@ void/*ERROR*/ transmition(RiDE_server * server, uint32_t addr, uint16_t port, ui
     {
         if (server->datas[i]->id == id)
         {
+            send_buf->base = (char *)malloc(sizeof(char) * (length + 1));
             strncpy(send_buf->base, server->datas[id]->data + offset, length + 1);
             send_buf->len = length;
-            send_buf->base[length] = '\0';
             uv_udp_send(&send_socket, &server->recv_socket, (const uv_buf_t *)send_buf, 1, (const struct sockaddr *)&send_addr, server->on_send);
-            break;
+            free(send_buf->base);
+            return;
         }
         else
             server->logger->logging(server->logger, INCORRECT_ID);
@@ -133,7 +129,6 @@ void/*ERROR*/ allocation(RiDE_server * server, uint64_t id, uint64_t length)
     if(server->datas_length == server->datas_capacity)
     {
         server->datas_capacity *= 2;
-        ///*
         datablock ** new_datas = (datablock **)malloc(sizeof(datablock*) * server->datas_capacity);
         if(!new_datas)
         {
@@ -145,13 +140,6 @@ void/*ERROR*/ allocation(RiDE_server * server, uint64_t id, uint64_t length)
             new_datas[i] = server->datas[i];
         free(server->datas);
         server->datas = new_datas;
-        //*/
-        /*
-        datas = (datablock **)realloc(datas, datas_capacity);
-        if(!datas)
-            //raise_an_error(OUT_OF_MEMORY);
-            return ERRORS.OUT_OF_MEMORY;
-        //*/
     }
     server->datas[server->datas_length] = block;
     server->datas_length++;

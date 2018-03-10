@@ -16,9 +16,11 @@ typedef struct RiDE_logger_
     void (* close)(struct RiDE_logger_ * log);
     void (* reopen)(struct RiDE_logger_ * log);
     void (* logging)(struct RiDE_logger_ * log, ERROR error_type);
+    int (* close_time)(struct RiDE_logger_ * log);
 } RiDE_logger;
 
 void open_log_file(RiDE_logger * log);
 void close_log_file(RiDE_logger * log);
 void reopen_log_file(RiDE_logger * log);
 void log_an_error(RiDE_logger * log, ERROR error_type);
+int time_to_close(RiDE_logger * log);

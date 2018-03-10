@@ -22,7 +22,8 @@ int main(int argc, char** argv)
     {
             .MAX_LOG_TIME = 10*10*1024, .MAX_LOG_SIZE = 100*1024*1024,
             .open = open_log_file, .close = close_log_file,
-            .reopen = reopen_log_file, .logging = log_an_error
+            .reopen = reopen_log_file, .logging = log_an_error,
+            .close_time = time_to_close
     };
     server = &(RiDE_server)
     {
@@ -38,7 +39,7 @@ int main(int argc, char** argv)
     {
         if (!server->started)
             server->start(server, logger);
-        if (clock() - logger->log_creation_time >= logger->MAX_LOG_TIME)
+        if (logger->close_time(logger))
             logger->reopen(logger);
     }
     logger->close(logger);
