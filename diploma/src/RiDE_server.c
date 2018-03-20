@@ -30,7 +30,7 @@ void on_allocate(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf)
     buf->base[suggested_size] = '\0';
 }
 
-void on_sending(uv_udp_send_t* req, int status)
+void on_sending(uv_udp_send_t * req, int status)
 {
 
 }
@@ -43,7 +43,7 @@ void server_start(RiDE_server * server, RiDE_logger * logger)
     struct sockaddr_in addr;
     server->event_loop = uv_default_loop();
     uv_udp_init(server->event_loop, &server->recv_socket);
-    uv_ip4_addr("127.0.0.1", 11000, &addr);
+    uv_ip4_addr("0.0.0.0", 68, &addr);
     uv_udp_bind(&server->recv_socket, (const struct sockaddr *)&addr, UV_UDP_REUSEADDR);
     uv_udp_recv_start(&server->recv_socket, server->on_alloc, server->on_recv);
     uv_run(server->event_loop, UV_RUN_DEFAULT);
@@ -58,7 +58,8 @@ void server_stop(RiDE_server * server)
 
 void/*ERROR*/ transmition(RiDE_server * server, uint32_t addr, uint16_t port, uint64_t id, uint64_t offset, uint64_t length)
 {
-    uv_udp_send_t send_socket;
+    uv_udp_t send_socket;
+    uv_udp_send_t send_req;
     struct in_addr ip_addr;
     ip_addr.s_addr = addr;
     struct sockaddr_in send_addr;
@@ -73,9 +74,11 @@ void/*ERROR*/ transmition(RiDE_server * server, uint32_t addr, uint16_t port, ui
         if (server->datas[i]->id == id)
         {
             send_buf->base = (char *)malloc(sizeof(char) * (length + 1));
+            // If we do not do this, the remote machine will not be able to parse
+            send_buf->base[0] = 'p';
             strncpy(send_buf->base, server->datas[id]->data + offset, length + 1);
             send_buf->len = length;
-            uv_udp_send(&send_socket, &server->recv_socket, (const uv_buf_t *)send_buf, 1, (const struct sockaddr *)&send_addr, server->on_send);
+            uv_udp_send(&send_req, &send_socket, (const uv_buf_t *)send_buf, 1, (const struct sockaddr *)&send_addr, server->on_send);
             free(send_buf->base);
             return;
         }
