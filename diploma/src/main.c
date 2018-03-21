@@ -34,13 +34,32 @@ int main(int argc, char** argv)
             .place = placing, .parse = parse_buffer,
             .alloc = allocation
     };
+    char message[40];
     logger->open(logger);
-    while(1)
+    #pragma omp parallel sections
     {
-        if (!server->started)
-            server->start(server, logger);
-        if (logger->close_time(logger))
-            logger->reopen(logger);
+        #pragma omp section
+        {
+            while(1)
+            {
+                if (!server->started)
+                    server->start(server, logger);
+                if (logger->close_time(logger))
+                    logger->reopen(logger);
+            }
+        }
+        #pragma omp section
+        {
+            while(1)
+            {
+                scanf("%s", message);
+                if (!strcmp(message, "server stop"))
+                {
+                    server->stop(server);
+                    break;
+                }
+            }
+        }
     }
     logger->close(logger);
     return 0;
