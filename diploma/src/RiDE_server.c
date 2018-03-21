@@ -1,4 +1,5 @@
 #include "RiDE_server.h"
+#include <omp.h>
 
 void datas_configure(RiDE_server * server)
 {
@@ -14,7 +15,7 @@ void datas_reset(RiDE_server * server)
     free(server->datas);
 }
 
-void on_recieve(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const struct sockaddr* addr, unsigned flags)
+void on_recieve(uv_udp_t * handle, ssize_t nread, const uv_buf_t * rcvbuf, const struct sockaddr * addr, unsigned flags)
 {
     if (nread > 0)
         server->parse(server, rcvbuf->base);
@@ -23,7 +24,7 @@ void on_recieve(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const s
     free(rcvbuf->base);
 }
 
-void on_allocate(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf)
+void on_allocate(uv_handle_t * client, size_t suggested_size, uv_buf_t * buf)
 {
     buf->base = (char *)malloc(suggested_size + 1);
     buf->len = suggested_size;
@@ -73,10 +74,12 @@ void/*ERROR*/ transmition(RiDE_server * server, uint32_t addr, uint16_t port, ui
     {
         if (server->datas[i]->id == id)
         {
-            send_buf->base = (char *)malloc(sizeof(char) * (length + 1));
+            uint64_t block_len = server->datas[i]->len;
+            uint64_t full_offset = sizeof('p') + sizeof(id) + sizeof(block_len) +
+                    sizeof(offset) + sizeof(length);
+            send_buf->base = (char *)malloc(sizeof(char) * (full_offset + length + 1));
             // If we do not do this, the remote machine will not be able to parse
-            send_buf->base[0] = 'p';
-            strncpy(send_buf->base, server->datas[id]->data + offset, length + 1);
+            fill_buffer_for_placing(send_buf->base, id, block_len, offset, length, server->datas[i]->data);
             send_buf->len = length;
             uv_udp_send(&send_req, &send_socket, (const uv_buf_t *)send_buf, 1, (const struct sockaddr *)&send_addr, server->on_send);
             free(send_buf->base);
@@ -88,12 +91,12 @@ void/*ERROR*/ transmition(RiDE_server * server, uint32_t addr, uint16_t port, ui
     //return ALL_CORRECT;
 }
 
-void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t offset, uint64_t length, char * data_ptr)
+void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t block_len, uint64_t offset, uint64_t data_len, char * data_ptr)
 {
     for(uint64_t i = 0; i < server->datas_length; i++)
         if(server->datas[i]->id == id)
         {
-            if(server->datas[i]->len < offset + length)
+            if(server->datas[i]->len < offset + data_len)
             {
                 server->logger->logging(server->logger, OUT_OF_RANGE);
                 return;
@@ -101,25 +104,19 @@ void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t offset, uint64
             }
             else
             {
-                strncpy(server->datas[i]->data + offset, data_ptr, length);
+                strncpy(server->datas[i]->data + offset, data_ptr, data_len);
+                if (!server->datas[i]->data)
+                    server->logger->logging(server->logger, OUT_OF_MEMORY);
                 return;
                 //return ALL_CORRECT;
             }
         }
-    server->logger->logging(server->logger, INCORRECT_ID);
-    return;
-    //return INCORRECT_ID;
+    // If we are here then block with this id doesn't exist yet
+    server->alloc(server, id, block_len);
 }
 
 void/*ERROR*/ allocation(RiDE_server * server, uint64_t id, uint64_t length)
 {
-    for(uint64_t i = 0; i < server->datas_length; i++)
-        if(server->datas[i]->id == id)
-        {
-            server->logger->logging(server->logger, ALREADY_ALLOCATED);
-            return;
-            //return ALREADY_ALLOCATED;
-        }
     datablock *block = datablock_alloc(id, length);
     // datablock_alloc and malloc/realloc return NULL
     // if system haven't enough memory for allocation
@@ -151,51 +148,32 @@ void/*ERROR*/ allocation(RiDE_server * server, uint64_t id, uint64_t length)
 
 void/*ERROR*/ parse_buffer(RiDE_server * server, const char * buf)
 {
-    uint64_t id, offset, length;
-    uint32_t host_addr;
-    uint16_t host_port;
+    uint64_t id, offset, data_len, block_len;
+    uint32_t remote_addr;
+    uint16_t remote_port;
     // Check the first byte in received buffer
-    switch(*buf)
+    if (*buf == 'p')
     {
-        // Command "beXtoh( ((uintX_t *)buf)[] )" interprets next X bits
-        // as unsigned number and convert it to endian of the calling machine
-        case 'a':
-        {
-            buf++; // Skip 'a'
-            id        = be64toh( ((uint64_t *)buf)[0] );
-            length    = be64toh( ((uint64_t *)buf)[1] );
-            server->alloc(server, id, length);
-            //return allocate(id, length);
-            break;
-        }
-        case 'p':
-        {
-            buf++; // Skip 'p'
-            id        = be64toh( ((uint64_t *)buf)[0] );
-            offset    = be64toh( ((uint64_t *)buf)[1] );
-            length    = be64toh( ((uint64_t *)buf)[2] );
-            char * data_ptr = (char *)(buf + sizeof(id) + sizeof(offset) + sizeof(length));
-            server->place(server, id, offset, length, data_ptr);
-            //return place(server, id, offset, length, data_ptr);
-            break;
-        }
-        case 't':
-        {
-            buf++; // Skip 't'
-            host_addr = be32toh( ((uint32_t *)buf)[0] );
-            buf += sizeof(host_addr); // Skip "host address"-bytes in buffer
-            host_port = be16toh( ((uint16_t *)buf)[0] );
-            buf += sizeof(host_port); // Skip "host port"-bytes in buffer
-            id        = be64toh( ((uint64_t *)buf)[0] );
-            offset    = be64toh( ((uint64_t *)buf)[1] );
-            length    = be64toh( ((uint64_t *)buf)[2] );
-            server->transmit(server, host_addr, host_port, id, offset, length);
-            //return transmit(host_addr, host_port, id, offset, length);
-            break;
-        }
-        default :
-            server->logger->logging(server->logger, UNKNOWN_COMMAND);
-            //return UNKNOWN_COMMAND;
-            break;
+        buf++; // Skip 'p'
+        id        = be64toh( ((uint64_t *)buf)[0] );
+        block_len = be64toh( ((uint64_t *)buf)[1] );
+        offset    = be64toh( ((uint64_t *)buf)[2] );
+        data_len  = be64toh( ((uint64_t *)buf)[3] );
+        char * data_ptr = (char *)(buf + sizeof(id) + sizeof(offset) + sizeof(data_len) + sizeof(block_len));
+        server->place(server, id, block_len, offset, data_len, data_ptr);
     }
+    else if (*buf == 't')
+    {
+        buf++; // Skip 't'
+        remote_addr = be32toh( ((uint32_t *)buf)[0] );
+        buf += sizeof(remote_addr); // Skip "remote machine address"-bytes in buffer
+        remote_port = be16toh( ((uint16_t *)buf)[0] );
+        buf += sizeof(remote_port); // Skip "remote machine port"-bytes in buffer
+        id        = be64toh( ((uint64_t *)buf)[0] );
+        offset    = be64toh( ((uint64_t *)buf)[1] );
+        data_len  = be64toh( ((uint64_t *)buf)[2] );
+        server->transmit(server, remote_addr, remote_port, id, offset, data_len);
+    }
+    else
+        server->logger->logging(server->logger, UNKNOWN_COMMAND);
 }
