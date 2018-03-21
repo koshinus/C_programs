@@ -113,6 +113,20 @@ void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t block_len, uin
         }
     // If we are here then block with this id doesn't exist yet
     server->alloc(server, id, block_len);
+    if(server->datas[server->datas_length - 1]->len < offset + data_len)
+    {
+        server->logger->logging(server->logger, OUT_OF_RANGE);
+        return;
+        //return OUT_OF_RANGE;
+    }
+    else
+    {
+        strncpy(server->datas[server->datas_length - 1]->data + offset, data_ptr, data_len);
+        if (!server->datas[server->datas_length - 1]->data)
+            server->logger->logging(server->logger, OUT_OF_MEMORY);
+        return;
+        //return ALL_CORRECT;
+    }
 }
 
 void/*ERROR*/ allocation(RiDE_server * server, uint64_t id, uint64_t length)
