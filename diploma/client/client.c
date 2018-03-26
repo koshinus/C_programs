@@ -12,7 +12,7 @@ uint32_t parseIPV4string(char* ipAddress)
   return ipbytes[0] | ipbytes[1] << 8 | ipbytes[2] << 16 | ipbytes[3] << 24;
 }
 
-void read_message_from_stdin(char * message, ssize_t msg_size)
+void read_message_from_stdin_getch(char * message, ssize_t msg_size)
 {
     char c;
     for(ssize_t i = 0; i < msg_size; i++)
@@ -29,13 +29,30 @@ void read_message_from_stdin(char * message, ssize_t msg_size)
         c = getch();
 }
 
+void read_message_from_stdin_getc(char * message, ssize_t msg_size)
+{
+    char c;
+    for(ssize_t i = 0; i < msg_size; i++)
+    {
+        if ((c = getc(stdin)) == '\n')
+        {
+            message[i] = '\0';
+            return;
+        }
+        else
+            message[i] = c;
+    }
+    while(c != '\n')
+        c = getc(stdin);
+}
+
 char buffer[1024];
 //int msg_size = 256;
 char message[256];
 char option[1];
 const char sending_machine_addr[] = "192.168.1.40";
 const uint16_t sending_machine_port = 68;
-char * target_machine_addr;
+char target_machine_addr[16];
 uint16_t target_machine_port;
 uint64_t id, len, offset;
 uv_loop_t * event_loop;
@@ -79,7 +96,9 @@ int main()
             case 'p': 
             {
                 printf("Print message: ");
-                read_message_from_stdin(message, sizeof(message));
+                //read_message_from_stdin_getch(message, sizeof(message));
+                //read_message_from_stdin_getc(message, sizeof(message));
+                scanf("%s", message);
                 //getline(&message, &msg_size, stdin);
                 printf("Print block id: ");
                 scanf("%lu", &id);
@@ -94,7 +113,9 @@ int main()
             case 't': 
             {
                 printf("Print message: ");
-                read_message_from_stdin(message, sizeof(message));
+                //read_message_from_stdin_getch(message, sizeof(message));
+                //read_message_from_stdin_getc(message, sizeof(message));
+                scanf("%s", message);
                 //getline(&message, &msg_size, stdin);
                 printf("Print block id: ");
                 scanf("%lu", &id);
