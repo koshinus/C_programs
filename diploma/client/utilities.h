@@ -36,6 +36,11 @@ union char_representation
 
 //uint32_t parseIPV4string(char* ipAddress);
 
-void fill_buffer(char * buf, char type, uint64_t id, uint64_t offset,
-        uint64_t len, uint32_t address, uint16_t port, char * data);
+void fill_buffer(char * buf, char type, uint64_t id, uint64_t block_len, uint64_t offset,
+        uint64_t data_len, uint32_t address, uint16_t port, char * data);
 
+void fill_buffer_for_placing(char * buf, uint64_t id, uint64_t block_len,
+                             uint64_t offset, uint64_t data_len, char * data);
+
+void fill_buffer_for_transmition(char * buf, uint64_t id, uint64_t offset,
+                                 uint64_t len, uint32_t address, uint16_t port);

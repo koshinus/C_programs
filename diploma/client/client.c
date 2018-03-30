@@ -4,7 +4,6 @@
 #include <curses.h>
 #include "utilities.h"
 
-
 uint32_t parseIPV4string(char* ipAddress)
 {
   char ipbytes[4];
@@ -12,47 +11,13 @@ uint32_t parseIPV4string(char* ipAddress)
   return ipbytes[0] | ipbytes[1] << 8 | ipbytes[2] << 16 | ipbytes[3] << 24;
 }
 
-void read_message_from_stdin_getch(char * message, ssize_t msg_size)
-{
-    char c;
-    for(ssize_t i = 0; i < msg_size; i++)
-    {
-        if ((c = getch()) == EOF)
-        {
-            message[i] = '\0';
-            return;
-        }
-        else
-            message[i] = c;
-    }
-    while(c != EOF)
-        c = getch();
-}
-
-void read_message_from_stdin_getc(char * message, ssize_t msg_size)
-{
-    char c;
-    for(ssize_t i = 0; i < msg_size; i++)
-    {
-        if ((c = getc(stdin)) == '\n')
-        {
-            message[i] = '\0';
-            return;
-        }
-        else
-            message[i] = c;
-    }
-    while(c != '\n')
-        c = getc(stdin);
-}
-
 char buffer[1024];
-//int msg_size = 256;
 char message[256];
 char option[1];
 const char sending_machine_addr[] = "192.168.1.40";
 const uint16_t sending_machine_port = 68;
-char target_machine_addr[16];
+char target_machine_ip_s[16];
+struct in_addr target_machine_ip_i;
 uint16_t target_machine_port;
 uint64_t id, len, offset;
 uv_loop_t * event_loop;
@@ -83,8 +48,6 @@ int main()
         {
             case 'a': 
             {
-                //printf("Print message: ");
-                //scanf("%s", message);
                 printf("Print block id: ");
                 scanf("%lu", &id);
                 printf("Print block len: ");
@@ -96,13 +59,10 @@ int main()
             case 'p': 
             {
                 printf("Print message: ");
-                //read_message_from_stdin_getch(message, sizeof(message));
-                //read_message_from_stdin_getc(message, sizeof(message));
                 scanf("%s", message);
-                //getline(&message, &msg_size, stdin);
-                printf("Print block id: ");
+                printf("Enter block id: ");
                 scanf("%lu", &id);
-                printf("Print block len: ");
+                printf("Print message len: ");
                 scanf("%lu", &len);
                 printf("Print offset in block: ");
                 scanf("%lu", &offset);
@@ -113,21 +73,21 @@ int main()
             case 't': 
             {
                 printf("Print message: ");
-                //read_message_from_stdin_getch(message, sizeof(message));
-                //read_message_from_stdin_getc(message, sizeof(message));
                 scanf("%s", message);
-                //getline(&message, &msg_size, stdin);
-                printf("Print block id: ");
+                printf("Enter block id: ");
                 scanf("%lu", &id);
-                printf("Print block len: ");
+                printf("Enter the length of a piece of data in the block: ");
                 scanf("%lu", &len);
-                printf("Print offset in block: ");
+                printf("Enter offset in block: ");
                 scanf("%lu", &offset);
-                printf("Print ip address of target machine: ");
-                scanf("%s", target_machine_addr);
-                printf("Print port of target machine: ");
+                printf("Enter ip address of target machine: ");
+                scanf("%s", target_machine_ip_s);
+                // inet_aton returns number in network-order view so
+                // in fill_buffer we doesn't do anything with address
+                inet_aton(target_machine_ip_s, target_machine_ip_i);
+                printf("Enter port of target machine: ");
                 scanf("%hu", &target_machine_port);
-                fill_buffer(buffer, option[0], id, offset, len, parseIPV4string(target_machine_addr), target_machine_port, message);
+                fill_buffer(buffer, option[0], id, offset, len, target_machine_ip_i.s_addr, target_machine_port, message);
                 printf("Case-t\n");
                 break;
             }
