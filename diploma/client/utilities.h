@@ -44,3 +44,5 @@ void fill_buffer_for_placing(char * buf, uint64_t id, uint64_t block_len,
 
 void fill_buffer_for_transmition(char * buf, uint64_t id, uint64_t offset,
                                  uint64_t len, uint32_t address, uint16_t port);
+
+void parse_buffer(const char * buf);

@@ -25,6 +25,7 @@ void on_send(uv_udp_send_t * req, int status)
 
 int client_loop()
 {
+    return 0;
 }
 
 int main()
@@ -61,13 +62,15 @@ int main()
             {
                 printf("Enter ip address of target machine: ");
                 scanf("%u.%u.%u.%u", &ipv4_addr[3], &ipv4_addr[2], &ipv4_addr[1], &ipv4_addr[0]);
-                target_machine_addr = (uint32_t)(-1) + (ipv4_addr[0] | ipv4_addr[1] << 8 | ipv4_addr[2] << 16 | ipv4_addr[3] << 24) + 1;
+                //target_machine_addr = (uint32_t)(-1) + (ipv4_addr[0] | ipv4_addr[1] << 8 | ipv4_addr[2] << 16 | ipv4_addr[3] << 24) + 1;
+                target_machine_addr = ipv4_addr[0] | ipv4_addr[1] << 8 | ipv4_addr[2] << 16 | ipv4_addr[3] << 24;
                 printf("Enter port of target machine: ");
                 scanf("%hu", &target_machine_port);
                 fill_buffer(buffer, option[0], id, 0, offset, msg_len, target_machine_addr, target_machine_port, NULL);
             }
             uv_buf->len = strlen(buffer);
             printf("%s\n", buffer);
+            parse_buffer(uv_buf->base);
             //uv_udp_send(&send_req, &send_socket, uv_buf, 1, (const struct sockaddr *)&send_addr, on_send);
         }
     }
