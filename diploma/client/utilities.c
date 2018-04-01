@@ -30,7 +30,7 @@ void fill_buffer_for_placing(char * buf, uint64_t id, uint64_t block_len,
     }
     uint64_t full_offset = sizeof('p') + sizeof(id) + sizeof(block_len)
             + sizeof(offset) + sizeof(data_len);
-    strncpy(buf + full_offset, data + offset, data_len);
+    strncpy(buf + full_offset, data, data_len);
 }
 
 
@@ -56,7 +56,7 @@ void fill_buffer_for_transmition(char * buf, uint64_t id, uint64_t offset,
         buf[i+15] = nr2.representation[i];
         buf[i+23] = nr3.representation[i];
     }
-    //31 = sizeof(type)+sizeof(nr1)+..+sizeof(nr5)
+    //31 == sizeof(type)+sizeof(nr1)+..+sizeof(nr5)
     buf[31] = '\0';
 }
 
