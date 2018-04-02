@@ -23,14 +23,15 @@ void fill_buffer_for_placing(char * buf, uint64_t id, uint64_t block_len,
     nr4.num = htobe64(data_len);
     for(int i = 0; i < 8; i++)
     {
+        //bytes
         //1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 | 17 18 19 20 21 22 23 24 | 25 26 27 28 29 30 31 32
         buf[i+1]  = nr1.representation[i];
         buf[i+9]  = nr2.representation[i];
         buf[i+17] = nr3.representation[i];
         buf[i+25] = nr4.representation[i];
     }
-    uint64_t full_offset = sizeof('p') + sizeof(id) + sizeof(block_len)
-            + sizeof(offset) + sizeof(data_len);// - 3;
+    uint64_t full_offset = sizeof(char) + sizeof(id) + sizeof(block_len)
+            + sizeof(offset) + sizeof(data_len);
     strncpy(buf + full_offset, data, data_len);
 }
 
@@ -84,7 +85,7 @@ void parse_buffer(const char * buf)
         block_len = be64toh( ((uint64_t *)buf)[1] );
         offset    = be64toh( ((uint64_t *)buf)[2] );
         data_len  = be64toh( ((uint64_t *)buf)[3] );
-        char * data_ptr = (char *)(buf + sizeof(id) + sizeof(offset) + sizeof(data_len) + sizeof(block_len) + 3);
+        char * data_ptr = (char *)(buf + sizeof(id) + sizeof(offset) + sizeof(data_len) + sizeof(block_len));
         printf("ID = %lu\nBLEN = %lu\nOFFSET = %lu\nDLEN = %lu\nDATA = %s\n", id, block_len, offset, data_len, data_ptr);
     }
     else if (*buf == 't')

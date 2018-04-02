@@ -9,4 +9,4 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 #set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -luv")
 
 add_executable(client ${SOURCE_FILES})
-target_link_libraries(diploma uv)
+target_link_libraries(client uv)
