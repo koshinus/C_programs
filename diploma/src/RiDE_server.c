@@ -33,12 +33,10 @@ void on_allocate(uv_handle_t * client, size_t suggested_size, uv_buf_t * buf)
 
 void on_sending(uv_udp_send_t * req, int status)
 {
-
 }
 
-void server_start(RiDE_server * server, RiDE_logger * logger)
+void server_start(RiDE_server * server)
 {
-    server->logger = logger;
     server->configure(server);
     server->started = 1; // started = true
     struct sockaddr_in addr;

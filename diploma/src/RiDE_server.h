@@ -18,11 +18,11 @@ typedef struct RiDE_server_
     uint64_t        datas_length;
     uv_loop_t     * event_loop;
     uv_udp_t        recv_socket;
-    RiDE_logger      * logger;
+    RiDE_logger   * logger;
     char            started;
     void (* configure)(struct RiDE_server_ * server);
     void (* reset    )(struct RiDE_server_ * server);
-    void (* start    )(struct RiDE_server_ * server, RiDE_logger * log);
+    void (* start    )(struct RiDE_server_ * server);
     void (* stop     )(struct RiDE_server_ * server);
     void (* on_alloc )(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf);
     void (* on_recv  )(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const struct sockaddr* addr, unsigned flags);
@@ -35,7 +35,7 @@ typedef struct RiDE_server_
 
 void datas_configure(RiDE_server * server);
 void datas_reset(RiDE_server * server);
-void server_start(RiDE_server * server, RiDE_logger * log);
+void server_start(RiDE_server * server);
 void server_stop(RiDE_server * server);
 void on_allocate(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf);
 void on_recieve(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const struct sockaddr* addr, unsigned flags);
