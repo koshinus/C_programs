@@ -19,8 +19,8 @@ void close_log_file(RiDE_logger * log)
 
 void reopen_log_file(RiDE_logger * log)
 {
-    log->close(log);
-    log->open(log);
+    close_log_file(log);
+    open_log_file(log);
 }
 
 void log_an_error(RiDE_logger *log, ERROR error_type)
@@ -41,7 +41,7 @@ void log_an_error(RiDE_logger *log, ERROR error_type)
                                     sizeof(error_messages[(int)error_type]) -
                                     sizeof('\0') * 3;
     if(log->current_log_size + current_err_msg_size >= log->MAX_LOG_SIZE)
-        log->reopen(log);
+        reopen_log_file(log);
     log->current_log_size += current_err_msg_size;
     fprintf(log->log_file, "ERROR| %s of type %s", time_string, error_messages[(int)error_type]);
 }

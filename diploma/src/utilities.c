@@ -31,7 +31,7 @@ void fill_buffer_for_placing(char * buf, uint64_t id, uint64_t block_len,
                             //sizeof('p')
     uint64_t full_offset = sizeof(char) + sizeof(id) + sizeof(block_len)
             + sizeof(offset) + sizeof(data_len);
-    strncpy(buf + full_offset, data + offset, data_len);
+    memcpy(buf + full_offset, data + offset, data_len);
 }
 
 

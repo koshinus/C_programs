@@ -1,13 +1,10 @@
 #include <uv.h>
-#include <stdio.h>
-#include <string.h>
-#include <curses.h>
 #include "utilities.h"
 
 char buffer[1024];
 char message[256];
 char option[1];
-const char sending_machine_addr[] = "192.168.1.40";
+const char sending_machine_addr[] = "127.0.0.1";
 const uint16_t sending_machine_port = 68;
 uint32_t ipv4_addr[4];
 uint32_t target_machine_addr;
@@ -65,7 +62,6 @@ int main()
             {
                 printf("Enter ip address of target machine: ");
                 scanf("%u.%u.%u.%u", &ipv4_addr[3], &ipv4_addr[2], &ipv4_addr[1], &ipv4_addr[0]);
-                //target_machine_addr = (uint32_t)(-1) + (ipv4_addr[0] | ipv4_addr[1] << 8 | ipv4_addr[2] << 16 | ipv4_addr[3] << 24) + 1;
                 target_machine_addr = ipv4_addr[0] | ipv4_addr[1] << 8 | ipv4_addr[2] << 16 | ipv4_addr[3] << 24;
                 printf("Enter port of target machine: ");
                 scanf("%hu", &target_machine_port);
@@ -73,15 +69,10 @@ int main()
                 uv_buf->len = sizeof(char) + sizeof(id) + sizeof(offset) + sizeof(msg_len) + 
                                 sizeof(target_machine_addr) + sizeof(target_machine_port);
             }
-            for (uint64_t i = 0; i < uv_buf->len; i++)
-                printf("%c", uv_buf->base[i]);
-            printf("\n");
-            parse_buffer(uv_buf->base);
-            //uv_udp_send(&send_req, &send_socket, uv_buf, 1, (const struct sockaddr *)&send_addr, on_send);
+            uv_udp_send(&send_req, &send_socket, uv_buf, 1, (const struct sockaddr *)&send_addr, on_send);
         }
     }
     //*/
-    //fill_buffer(buffer, 'p', 0, 100, 8, 7, 0, 0, "jjjjjjj");
     return uv_run(event_loop, UV_RUN_DEFAULT);
 }
 
