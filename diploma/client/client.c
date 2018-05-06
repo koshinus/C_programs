@@ -11,8 +11,6 @@ uint32_t target_machine_addr;
 uint16_t target_machine_port;
 uint64_t id, block_len, offset, msg_len;
 uv_loop_t * event_loop;
-uv_udp_t send_socket;
-uv_udp_send_t send_req;
 uv_buf_t * uv_buf = &((uv_buf_t){.base = buffer, .len = 0});
 struct sockaddr_in send_addr;
 
@@ -28,10 +26,6 @@ int client_loop()
 int main()
 {
     event_loop = uv_default_loop();
-    uv_udp_init(event_loop, &send_socket);
-    uv_ip4_addr(sending_machine_addr, sending_machine_port, &send_addr);
-    uv_udp_bind(&send_socket, (const struct sockaddr *)&send_addr, 0);
-    uv_udp_set_broadcast(&send_socket, 1);
     ///*    
     while(1)
     {
@@ -69,6 +63,12 @@ int main()
                 uv_buf->len = sizeof(char) + sizeof(id) + sizeof(offset) + sizeof(msg_len) + 
                                 sizeof(target_machine_addr) + sizeof(target_machine_port);
             }
+            uv_udp_t send_socket;
+            uv_udp_send_t send_req;
+            uv_udp_init(event_loop, &send_socket);
+            uv_ip4_addr(sending_machine_addr, sending_machine_port, &send_addr);
+            uv_udp_bind(&send_socket, (const struct sockaddr *)&send_addr, 0);
+            uv_udp_set_broadcast(&send_socket, 1);
             uv_udp_send(&send_req, &send_socket, uv_buf, 1, (const struct sockaddr *)&send_addr, on_send);
         }
     }

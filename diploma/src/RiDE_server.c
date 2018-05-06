@@ -18,11 +18,7 @@ void datas_reset(RiDE_server * server)
 void on_recieve(uv_udp_t * handle, ssize_t nread, const uv_buf_t * rcvbuf, const struct sockaddr * addr, unsigned flags)
 {
     if (nread > 0)
-    {
-        printf("[message received]\n");
         parse_buffer(server, rcvbuf->base);
-        wait_for_message();
-    }
     else
         log_an_error(server->logger, NO_DATA_RECEIVED);
     free(rcvbuf->base);
@@ -35,15 +31,8 @@ void on_allocate(uv_handle_t * client, size_t suggested_size, uv_buf_t * buf)
     buf->base[suggested_size] = '\0';
 }
 
-void wait_for_message()
-{
-    printf("Ready for recieving!\n");
-    uv_udp_recv_start(&server->recv_socket, on_allocate, on_recieve);
-}
-
 void on_sending(uv_udp_send_t * req, int status)
 {
-    wait_for_message();
 }
 
 void server_start(RiDE_server * server)
@@ -55,7 +44,7 @@ void server_start(RiDE_server * server)
     uv_udp_init(server->event_loop, &server->recv_socket);
     uv_ip4_addr("0.0.0.0", 68, &addr);
     uv_udp_bind(&server->recv_socket, (const struct sockaddr *)&addr, UV_UDP_REUSEADDR);
-    wait_for_message();
+    uv_udp_recv_start(&server->recv_socket, on_allocate, on_recieve);
 
     /*return*/ uv_run(server->event_loop, UV_RUN_DEFAULT);
 }
@@ -91,7 +80,7 @@ void/*ERROR*/ transmition(RiDE_server * server, uint32_t addr, uint16_t port, ui
             // If we do not do this, the remote machine will not be able to parse
             fill_buffer_for_placing(send_buf->base, id, block_len, offset, length, server->datas[i]->data);
             send_buf->len = length;
-            uv_udp_send(&send_req, &send_socket, (const uv_buf_t *)send_buf, 1, (const struct sockaddr *)&send_addr, on_sending);
+            uv_udp_send(&send_req, &send_socket, send_buf, 1, (const struct sockaddr *)&send_addr, on_sending);
             free(send_buf->base);
             return;
         }
@@ -109,7 +98,6 @@ void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t block_len, uin
             if(server->datas[i]->len < offset + data_len)
             {
                 log_an_error(server->logger, OUT_OF_RANGE);
-                wait_for_message();
                 //return OUT_OF_RANGE;
             }
             else
@@ -117,7 +105,6 @@ void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t block_len, uin
                 memcpy(server->datas[i]->data + offset, data_ptr, data_len);
                 if (!server->datas[i]->data)
                     log_an_error(server->logger, OUT_OF_MEMORY);
-                wait_for_message();
                 //return ALL_CORRECT;
             }
         }
@@ -126,7 +113,6 @@ void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t block_len, uin
     if(server->datas[server->datas_length - 1]->len < offset + data_len)
     {
         log_an_error(server->logger, OUT_OF_RANGE);
-        wait_for_message();
         //return OUT_OF_RANGE;
     }
     else
@@ -134,7 +120,6 @@ void/*ERROR*/ placing(RiDE_server * server, uint64_t id, uint64_t block_len, uin
         memcpy(server->datas[server->datas_length - 1]->data + offset, data_ptr, data_len);
         if (!server->datas[server->datas_length - 1]->data)
             log_an_error(server->logger, OUT_OF_MEMORY);
-        wait_for_message();
         //return ALL_CORRECT;
     }
 }
@@ -184,7 +169,7 @@ void/*ERROR*/ parse_buffer(RiDE_server * server, const char * buf)
         offset    = be64toh( ((uint64_t *)buf)[2] );
         data_len  = be64toh( ((uint64_t *)buf)[3] );
         char * data_ptr = (char *)(buf + sizeof(id) + sizeof(offset) + sizeof(data_len) + sizeof(block_len));
-        //printf("p-%lu-%lu-%lu-%lu-%s\n", id, block_len, offset, data_len, data_ptr);
+        printf("p-%lu-%lu-%lu-%lu-%s\n", id, block_len, offset, data_len, data_ptr);
         placing(server, id, block_len, offset, data_len, data_ptr);
     }
     else if (*buf == 't')
@@ -197,7 +182,7 @@ void/*ERROR*/ parse_buffer(RiDE_server * server, const char * buf)
         id        = be64toh( ((uint64_t *)buf)[0] );
         offset    = be64toh( ((uint64_t *)buf)[1] );
         data_len  = be64toh( ((uint64_t *)buf)[2] );
-        //printf("p-%u-%i-%lu-%lu-%lu\n", remote_addr, remote_port, id, offset, data_len);
+        printf("t-%u-%i-%lu-%lu-%lu\n", remote_addr, remote_port, id, offset, data_len);
         transmition(server, remote_addr, remote_port, id, offset, data_len);
     }
     else

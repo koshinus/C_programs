@@ -1,71 +1,61 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <uv.h>
+#include <stdint.h>
 
-/*
-#define CHECK(r, msg)                                       \
-    if ((r)<0) {                                            \
-        fprintf(stderr, "%s: %s\n", msg, uv_strerror(r));   \
-        exit(1);                                            \
-    }
-*/
-
-static uv_loop_t *loop;
-static uv_udp_t   recv_socket;
- 
-static void on_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf, const struct sockaddr* addr, unsigned flags) 
+class udp_server
 {
-    if (nread > 0) 
+public:
+    udp_server(boost::asio::io_service& io_service)
+    : socket_(io_service, udp::endpoint(udp::v4(), 13))
     {
-        printf("%lu\n",nread);
-        for (ssize_t i = 0; i < nread; i++)
-            printf("%c", rcvbuf->base[i]);
-        //printf("%s",rcvbuf->base);
-        printf("\n");
+    start_receive();
     }
-    printf("free  :%lu %p\n",rcvbuf->len,rcvbuf->base);
-    free(rcvbuf->base);
-}
- 
-static void on_alloc(uv_handle_t* client, size_t suggested_size, uv_buf_t* buf) 
+
+private:
+    void start_receive()
+    {
+        socket_.async_receive_from(
+            boost::asio::buffer(recv_buffer_), remote_endpoint_,
+            boost::bind(&udp_server::handle_receive, this,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred));
+    }
+    void handle_receive(const boost::system::error_code& error,
+        std::size_t /*bytes_transferred*/)
+    {    
+        if (!error || error == boost::asio::error::message_size)
+        {
+            boost::shared_ptr<std::string> message(
+                new std::string(make_daytime_string()));
+            socket_.async_send_to(boost::asio::buffer(*message), remote_endpoint_,
+                boost::bind(&udp_server::handle_send, this, message,
+                boost::asio::placeholders::error,
+                boost::asio::placeholders::bytes_transferred));
+            start_receive();
+        }
+    }
+    void handle_send(boost::shared_ptr<std::string> /*message*/,
+        const boost::system::error_code& /*error*/,
+        std::size_t /*bytes_transferred*/)
+    {
+    }
+
+    udp::socket socket_;
+    udp::endpoint remote_endpoint_;
+    boost::array<char, 1> recv_buffer_;
+};
+
+int main()
 {
-    buf->base = malloc(suggested_size);
-    buf->len = suggested_size;
-    printf("malloc:%lu %p\n",buf->len,buf->base);
-}
+  try
+  {    
+    boost::asio::io_service io_service;
+    udp_server server(io_service);
+    io_service.run();
+  }
+  catch (std::exception& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
 
-/*
-int main(int argc,char *argv[]) 
-{
-    int status;
-    struct sockaddr_in addr;
-    uv_loop = uv_default_loop();
-    
-    status = uv_udp_init(uv_loop,&server);
-    CHECK(status,"init");
-    
-    uv_ip4_addr("0.0.0.0", 68, &addr);
-
-    status = uv_udp_bind(&server, (const struct sockaddr*)&addr,0);
-    CHECK(status,"bind");
-    
-    status = uv_udp_recv_start(&server, on_alloc, on_recv);
-    CHECK(status,"recv");
-    
-    uv_run(uv_loop, UV_RUN_DEFAULT);
-    
-    return 0;
-}
-*/
-int main() {
-    loop = uv_default_loop();
-
-    uv_udp_init(loop, &recv_socket);
-    struct sockaddr_in recv_addr;
-    uv_ip4_addr("0.0.0.0", 68, &recv_addr);
-    uv_udp_bind(&recv_socket, (const struct sockaddr *)&recv_addr, UV_UDP_REUSEADDR);
-    uv_udp_recv_start(&recv_socket, on_alloc, on_recv);
-
-    return uv_run(loop, UV_RUN_DEFAULT);
+  return 0;
 }

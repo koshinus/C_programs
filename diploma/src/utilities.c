@@ -28,7 +28,7 @@ void fill_buffer_for_placing(char * buf, uint64_t id, uint64_t block_len,
         buf[i+17] = nr3.representation[i];
         buf[i+25] = nr4.representation[i];
     }
-                            //sizeof('p')
+                          //sizeof('p')
     uint64_t full_offset = sizeof(char) + sizeof(id) + sizeof(block_len)
             + sizeof(offset) + sizeof(data_len);
     memcpy(buf + full_offset, data + offset, data_len);
