@@ -5,7 +5,7 @@ char buffer[1024];
 char message[256];
 char option[1];
 const char sending_machine_addr[] = "127.0.0.1";
-const uint16_t sending_machine_port = 68;
+const uint16_t sending_machine_port = 6868;
 uint32_t ipv4_addr[4];
 uint32_t target_machine_addr;
 uint16_t target_machine_port;
@@ -26,7 +26,6 @@ int client_loop()
 int main()
 {
     event_loop = uv_default_loop();
-    ///*    
     while(1)
     {
         printf("Wait for option symbol: ");
@@ -72,7 +71,6 @@ int main()
             uv_udp_send(&send_req, &send_socket, uv_buf, 1, (const struct sockaddr *)&send_addr, on_send);
         }
     }
-    //*/
     return uv_run(event_loop, UV_RUN_DEFAULT);
 }
 
