@@ -156,6 +156,7 @@ void parse_buffer(RiDE_server * server, const char * buf)
         offset    = be64toh( ((uint64_t *)buf)[2] );
         data_len  = be64toh( ((uint64_t *)buf)[3] );
         char * data_ptr = (char *)(buf + sizeof(id) + sizeof(offset) + sizeof(data_len) + sizeof(block_len));
+        printf("p-%lu-%lu-%lu-%lu-%s\n", id, block_len, offset, data_len, data_ptr);
         placing(server, id, block_len, offset, data_len, data_ptr);
     }
     else if (*buf == 't')
@@ -168,6 +169,7 @@ void parse_buffer(RiDE_server * server, const char * buf)
         id        = be64toh( ((uint64_t *)buf)[0] );
         offset    = be64toh( ((uint64_t *)buf)[1] );
         data_len  = be64toh( ((uint64_t *)buf)[2] );
+        printf("t-%u-%i-%lu-%lu-%lu\n", remote_addr, remote_port, id, offset, data_len);
         transmition(server, remote_addr, remote_port, id, offset, data_len);
     }
     else

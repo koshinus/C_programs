@@ -18,11 +18,6 @@ void on_send(uv_udp_send_t * req, int status)
 {
 }
 
-int client_loop()
-{
-    return 0;
-}
-
 int main()
 {
     event_loop = uv_default_loop();
